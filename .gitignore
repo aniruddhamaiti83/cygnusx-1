@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+.venv/
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# build / runtime
+dist/
+.output/
+.tanstack/
+.vercel/
+*.db
+backend/data/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# editor / OS
+.DS_Store
+.vscode/
+!.vscode/extensions.json
+*.swp
+
+# sandbox noise (do not ship)
+.grok/preview.log
+.grok/status
+.grok/skills/
+.grok/references/
+.project_id
+.node_modules.lock
+screenshots/*.png
+screenshots/*.json
+artifacts/*.zip
+attachments/
