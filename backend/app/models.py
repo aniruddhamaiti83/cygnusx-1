@@ -184,6 +184,13 @@ class CreditPull(Base):
     source: Mapped[str] = mapped_column(String(32))
     product_code: Mapped[str] = mapped_column(String(32))
     score: Mapped[float] = mapped_column(Float, default=0)
+    score_type: Mapped[str] = mapped_column(String(64), default="")
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    years_since_first_credit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    outstanding_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
+    utilization_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
+    open_tradelines: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    past_due_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
     artefact_id: Mapped[str] = mapped_column(String(36), default=new_id)
     fcra_purpose: Mapped[str | None] = mapped_column(String(36), nullable=True)
     outcome: Mapped[str] = mapped_column(String(16), default="fail")
@@ -233,6 +240,14 @@ class SbaProfile(Base):
     is_franchise: Mapped[bool] = mapped_column(Boolean, default=False)
     size_standard_met: Mapped[bool] = mapped_column(Boolean, default=True)
     notes: Mapped[str] = mapped_column(Text, default="")
+    mock_report_json: Mapped[str] = mapped_column(Text, default="")
+    sam_status: Mapped[str] = mapped_column(String(32), default="")
+    size_standard: Mapped[str] = mapped_column(String(96), default="")
+    eligibility_status: Mapped[str] = mapped_column(String(32), default="")
+    ran_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    actor: Mapped[str] = mapped_column(String(128), default="")
+    artefact_id: Mapped[str] = mapped_column(String(36), default="")
+    provider: Mapped[str] = mapped_column(String(64), default="")
 
 
 class CollateralItem(Base):
@@ -244,6 +259,7 @@ class CollateralItem(Base):
     label: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(Text, default="")
     value: Mapped[str] = mapped_column(String(32), default="")
+    location: Mapped[str] = mapped_column(String(255), default="")
     owner_ref: Mapped[str] = mapped_column(String(64), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
@@ -286,6 +302,10 @@ class ScorecardResult(Base):
     model_name: Mapped[str] = mapped_column(String(64), default="")
     ran_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     actor: Mapped[str] = mapped_column(String(128), default="Credit policy pack")
+    hallucination: Mapped[float] = mapped_column(Float, default=1.0)
+    releasable: Mapped[bool] = mapped_column(Boolean, default=False)
+    trace_id: Mapped[str] = mapped_column(String(64), default="")
+    brief_json: Mapped[str] = mapped_column(Text, default="{}")
 
 
 class Decision(Base):

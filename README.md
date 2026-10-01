@@ -58,11 +58,40 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+### 3b. FastAPI in Docker (port 8000)
+
+From the repo root. Postgres is on the Compose network; the API is published on **8000**.
+
+```bash
+cp .env.example .env   # optional — set SECRET_KEY / POSTGRES_PASSWORD / XAI_API_KEY
+docker compose up --build
+```
+
+Health: [http://127.0.0.1:8000/api/cx1/health](http://127.0.0.1:8000/api/cx1/health)
+
+`npm run dev` still proxies `/api/cx1` to that port.
+
+SQLite only (no Postgres):
+
+```bash
+docker build -t cygnusx1-api ./backend
+docker run --rm -p 8000:8000 -v cygnusx1-data:/app/data cygnusx1-api
+```
+
+Local Ollama from the container: set `LLM_BASE_URL=http://host.docker.internal:11434/v1` in `.env`.
+
 ### 4. Frontend
 
 ```bash
 npm install
 npm run dev
+```
+
+`npm run dev` starts FastAPI on port 8000 if it is not already running, then the UI.
+You can also start the API on its own:
+
+```bash
+npm run api
 ```
 
 `/api/cx1` is proxied to FastAPI. Origination writes PostgreSQL tables. Stage

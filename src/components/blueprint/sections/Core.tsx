@@ -70,7 +70,7 @@ export function PipelineSections() {
             ["Business (org)", "Business.businessId, EIN token", "SOS / KYB; sole prop is a person with optional org overlay."],
             ["Process / file", "Process.processId", "Stage machine 01–08. Never a chat session key."],
             ["Loan (facility)", "Loan.loanId → processId", "Keepers only: amount, rate, lookups, guaranty, dates."],
-            ["Credit artefacts", "CreditPull.artefactId", "One consumer + one commercial per process. No re-pull on retry."],
+            ["Credit artefacts", "CreditPull.artefactId", "One or both bureaus. Snapshot: type, score, last checked, years on file, outstanding. No re-pull on retry."],
             ["Spreads", "SpreadPeriod", "Confidence-scored; override logged."],
             ["Collateral", "CollateralItem + Pledge", "Typed items pledged to this loan."],
           ]}

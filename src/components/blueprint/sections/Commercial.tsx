@@ -63,7 +63,7 @@ export function CommercialSections() {
           headers={["Audience", "Focus"]}
           rows={[
             ["RM / intake", "Customer + email verify + account, Business, Loan keepers"],
-            ["Credit / fraud", "Consumer CRA, commercial bureau, OFAC — fail-closed"],
+            ["Credit / fraud", "Consumer CRA, commercial bureau, or OFAC — any one qualifies stage 02"],
             ["Processor", "KYB, SBA profile, spreads, collateral, exception queues"],
             ["Underwriter", "Package navigation, reason codes, Decision of record"],
             ["Closer / funding", "Imaging ACK, E-Tran authorization, dual-control post"],

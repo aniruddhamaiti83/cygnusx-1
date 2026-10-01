@@ -25,9 +25,9 @@ export function FileRail() {
   const intakeReady = Boolean(customer && business && loanSaved && currentStage === "intake");
   const preAppReady = Boolean(
     currentStage === "preApplication" &&
-      consumerPull?.outcome === "pass" &&
-      businessPull?.outcome === "pass" &&
-      fraudCheck?.outcome === "pass",
+      (consumerPull?.outcome === "pass" ||
+        businessPull?.outcome === "pass" ||
+        fraudCheck?.outcome === "pass"),
   );
   const processingReady = Boolean(currentStage === "processing" && kybReport && sbaProfile);
   const collateralReady = Boolean(currentStage === "collateral" && collaterals.length && pledges.length);
@@ -40,15 +40,15 @@ export function FileRail() {
     currentStage === "intake"
       ? { ready: intakeReady, label: "RM: move to Pre-application", hint: "Complete Customer, email verification, Business, and save Loan details." }
       : currentStage === "preApplication"
-        ? { ready: preAppReady, label: "Move to Processing", hint: "Consumer credit, business credit, and fraud must pass." }
+        ? { ready: preAppReady, label: "Move to Processing", hint: "Any one pass — consumer credit, business credit, or fraud — qualifies the customer." }
         : currentStage === "processing"
-          ? { ready: processingReady, label: "Move to Collateral", hint: "KYB and SBA profile are required." }
+          ? { ready: processingReady, label: "Move to Collateral", hint: "Run the mock processing pack (KYB + SBA profile)." }
           : currentStage === "collateral"
-            ? { ready: collateralReady, label: "Move to Underwriter", hint: "Add at least one pledged item." }
+            ? { ready: collateralReady, label: "Move to Underwriter", hint: "Pledge at least one item. Worker runs a mock UCC search." }
             : currentStage === "underwriter"
-              ? { ready: false, label: "", hint: scorecard ? "Human of record decides on the page." : "Run the policy pack first." }
+              ? { ready: false, label: "", hint: scorecard?.releasable ? "Approve to move the loan toward Funding, or reject with a reason." : "Run the credit decision. Approve needs 97% confidence and under 3% hallucination." }
               : currentStage === "documents"
-                ? { ready: docsReady, label: "Move to Financing", hint: "ACK and review every required document." }
+                ? { ready: docsReady, label: "Move to Funding", hint: "ACK and review every required document." }
                 : currentStage === "financing"
                   ? { ready: finReady, label: "Move to Closure", hint: "Authorize E-Tran first." }
                   : null;

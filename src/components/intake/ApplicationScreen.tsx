@@ -11,29 +11,30 @@ import { LoanForm } from "./LoanForm";
 import { PreApplication } from "./PreApplication";
 import { Processing } from "./Processing";
 import { Stepper } from "./Stepper";
+import { SwarmDiagram } from "@/components/blueprint/SwarmDiagram";
 import { Underwriter } from "./Underwriter";
 
 const STAGE_COPY: Record<string, { kicker: string; title: string; lede: string }> = {
   intake: { kicker: "", title: "", lede: "" },
   preApplication: {
-    kicker: "Pre-application · Consumer & business credit",
-    title: "Credit bureau pulls",
-    lede: "Consumer CRA on the liable Account (FCRA). Commercial bureau on the Business. Fraud screen. Fail-closed.",
+    kicker: "Pre-application · Qualify the customer",
+    title: "Credit and fraud checks",
+    lede: "Any one passing check — consumer credit, business credit, or fraud history — qualifies the customer to continue.",
   },
   processing: {
     kicker: "Processing · Processor",
     title: "Processing",
-    lede: "Jordan Kim (processor). KYB and SBA size/eligibility on the Business.",
+    lede: "Jordan Kim (processor). Mock SOS, SBA size, SAM.gov, and franchise checks — the report is stored on the SBA profile.",
   },
   collateral: {
     kicker: "Collateral · Processor",
     title: "Collateral",
-    lede: "Typed items, pledges, insurance. Collateral worker reviews the package.",
+    lede: "Typed items, lien position, location, insurance, coverage vs the facility. Mock UCC on the worker.",
   },
   underwriter: {
-    kicker: "Underwriter · Multi-agent",
-    title: "Underwriter",
-    lede: "Supervisor → policy pack + evaluator. Scorecard recommends. Diana Okonkwo decides.",
+    kicker: "Underwriter · Credit decision",
+    title: "Credit decision",
+    lede: "Three agents read credit, collateral, and statements. Diana Okonkwo approves, or rejects with a reason.",
   },
   documents: {
     kicker: "Documents · Closer",
@@ -41,8 +42,8 @@ const STAGE_COPY: Record<string, { kicker: string; title: string; lede: string }
     lede: "Imaging ACK and review. A document is not filed without both.",
   },
   financing: {
-    kicker: "Financing · Funding ops",
-    title: "E-Tran",
+    kicker: "Funding · Funding ops",
+    title: "Funding",
     lede: "Human-authorized guaranty. Workers never invent a number.",
   },
   closure: {
@@ -55,6 +56,7 @@ const STAGE_COPY: Record<string, { kicker: string; title: string; lede: string }
 export function ApplicationScreen() {
   const hydrated = useOrigination((s) => s.hydrated);
   const hydrate = useOrigination((s) => s.hydrate);
+  const apiError = useOrigination((s) => s.apiError);
   const step = useOrigination((s) => s.step);
   const setStep = useOrigination((s) => s.setStep);
   const currentStage = useOrigination((s) => s.currentStage) ?? "intake";
@@ -126,8 +128,30 @@ export function ApplicationScreen() {
               ) : null}
             </div>
 
+            <SwarmDiagram />
+
             {!hydrated ? (
               <p className="text-ink-soft">Loading file…</p>
+            ) : apiError ? (
+              <div className="rounded-lg border border-bad bg-bad-wash text-bad p-5 sm:p-6">
+                <p className="font-medium mb-2">Origination API is not running</p>
+                <p className="text-sm mb-3">
+                  Saving a Customer needs FastAPI on port 8000. Leave this page open and start the
+                  API in another terminal from the repo root, then refresh.
+                </p>
+                <pre className="text-xs font-mono bg-white/80 text-ink rounded-md px-3 py-2 overflow-x-auto mb-3">
+                  {`python3 -m venv backend/.venv
+backend/.venv/bin/pip install -r backend/requirements.txt
+npm run api`}
+                </pre>
+                <p className="text-sm mb-0">
+                  Windows: <span className="font-mono">py -3 -m venv backend\\.venv</span> then{" "}
+                  <span className="font-mono">backend\\.venv\\Scripts\\pip install -r backend\\requirements.txt</span>{" "}
+                  and <span className="font-mono">npm run api</span>. Or{" "}
+                  <span className="font-mono">docker compose up --build</span>.
+                </p>
+                <p className="text-sm mt-3 mb-0 opacity-80">{apiError}</p>
+              </div>
             ) : currentStage === "preApplication" ? (
               <PreApplication />
             ) : currentStage === "processing" ? (

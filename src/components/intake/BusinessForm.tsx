@@ -74,7 +74,11 @@ export function BusinessForm() {
       {errors.form ? <p className="text-sm text-bad mb-0">{errors.form}</p> : null}
       <div className="grid sm:grid-cols-2 gap-4">
         <Field label="Business name" required error={errors.legalName}>
-          <TextInput value={legalName} autoComplete="organization" onChange={(e) => setLegalName(e.target.value)} />
+          <TextInput
+            value={legalName}
+            autoComplete="organization"
+            onChange={(e) => setLegalName(e.target.value)}
+          />
         </Field>
         <Field label="EIN / SSN" required error={errors.taxId} hint="Nine digits. Tokenized at save.">
           <TextInput
@@ -92,7 +96,9 @@ export function BusinessForm() {
           <Select value={businessType} onChange={(e) => setBusinessType(e.target.value)}>
             <option value="">Select</option>
             {BUSINESS_TYPES.map((t) => (
-              <option key={t.id} value={t.id}>{t.label}</option>
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
             ))}
           </Select>
         </Field>
@@ -100,7 +106,12 @@ export function BusinessForm() {
           <TextInput type="date" value={incorporatedOn} onChange={(e) => setIncorporatedOn(e.target.value)} />
         </Field>
         <Field label="NAICS code" required error={errors.naicsCode}>
-          <TextInput inputMode="numeric" maxLength={6} value={naicsCode} onChange={(e) => setNaicsCode(digitsOnly(e.target.value).slice(0, 6))} />
+          <TextInput
+            inputMode="numeric"
+            maxLength={6}
+            value={naicsCode}
+            onChange={(e) => setNaicsCode(digitsOnly(e.target.value).slice(0, 6))}
+          />
         </Field>
       </div>
 
@@ -113,23 +124,41 @@ export function BusinessForm() {
       <div className="border-t border-line pt-6 grid sm:grid-cols-2 gap-4">
         <h2 className="sm:col-span-2 text-lg mb-0">Requested facility</h2>
         <Field label="Loan amount" required error={errors.loanAmount}>
-          <TextInput inputMode="decimal" value={loanAmount} placeholder="0.00" onChange={(e) => setLoanAmount(formatMoneyInput(e.target.value))} />
+          <TextInput
+            inputMode="decimal"
+            value={loanAmount}
+            placeholder="0.00"
+            onChange={(e) => setLoanAmount(formatMoneyInput(e.target.value))}
+          />
         </Field>
         <Field label="Loan purpose" required error={errors.loanPurpose}>
-          <Select value={loanPurpose} onChange={(e) => setLoanPurpose(e.target.value as typeof loanPurpose)}>
+          <Select
+            value={loanPurpose}
+            onChange={(e) => setLoanPurpose(e.target.value as typeof loanPurpose)}
+          >
             <option value="">Select</option>
             {LOAN_PURPOSES.map((p) => (
-              <option key={p.id} value={p.id}>{p.label}</option>
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
             ))}
           </Select>
         </Field>
       </div>
 
       <div className="flex flex-wrap justify-between gap-3">
-        <button type="button" onClick={() => setStep("customer")} className="h-12 px-5 rounded-md border border-line bg-white font-medium hover:border-accent">
+        <button
+          type="button"
+          onClick={() => setStep("customer")}
+          className="h-12 px-5 rounded-md border border-line bg-white font-medium hover:border-accent"
+        >
           Back to customer
         </button>
-        <button type="submit" disabled={!canSubmit || busy} className="h-12 px-6 rounded-md bg-navy text-paper font-medium disabled:opacity-40 hover:bg-navy-2 transition-colors duration-150">
+        <button
+          type="submit"
+          disabled={!canSubmit || busy}
+          className="h-12 px-6 rounded-md bg-navy text-paper font-medium disabled:opacity-40 hover:bg-navy-2 transition-colors duration-150"
+        >
           {existing ? "Save business and open loan" : "Create business and open loan"}
         </button>
       </div>

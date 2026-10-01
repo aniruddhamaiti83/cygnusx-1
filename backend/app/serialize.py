@@ -13,6 +13,15 @@ def iso(dt: datetime | None) -> str | None:
     return dt.isoformat()
 
 
+def _json_obj(raw: str | None):
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
 def address_dict(row: models.Address | None) -> dict:
     if not row:
         return {"line1": "", "line2": "", "city": "", "state": "", "postalCode": ""}
@@ -120,6 +129,13 @@ def pull_dict(row: models.CreditPull | None) -> dict | None:
         "source": row.source,
         "productCode": row.product_code,
         "score": row.score,
+        "scoreType": row.score_type or "",
+        "lastCheckedAt": iso(row.last_checked_at) or iso(row.ran_at),
+        "yearsSinceFirstCredit": row.years_since_first_credit,
+        "outstandingAmount": row.outstanding_amount,
+        "utilizationPct": row.utilization_pct,
+        "openTradelines": row.open_tradelines,
+        "pastDueAmount": row.past_due_amount,
         "artefactId": row.artefact_id,
         "fcraPurpose": row.fcra_purpose,
         "outcome": row.outcome,
@@ -234,6 +250,14 @@ def file_dict(db: Session, process: models.Process) -> dict:
             "isFranchise": sba.is_franchise,
             "sizeStandardMet": sba.size_standard_met,
             "notes": sba.notes,
+            "mockReport": _json_obj(sba.mock_report_json),
+            "samStatus": sba.sam_status,
+            "sizeStandard": sba.size_standard,
+            "eligibilityStatus": sba.eligibility_status,
+            "ranAt": iso(sba.ran_at),
+            "actor": sba.actor,
+            "artefactId": sba.artefact_id,
+            "provider": sba.provider or "mock",
         },
         "collaterals": [
             {
@@ -242,6 +266,7 @@ def file_dict(db: Session, process: models.Process) -> dict:
                 "label": i.label,
                 "description": i.description,
                 "value": i.value,
+                "location": i.location,
                 "ownerRef": i.owner_ref,
             }
             for i in items
@@ -274,8 +299,14 @@ def file_dict(db: Session, process: models.Process) -> dict:
             "scorecardId": scorecard.scorecard_id,
             "recommendedAction": scorecard.recommended_action,
             "confidence": scorecard.confidence,
+            "hallucination": scorecard.hallucination if scorecard.hallucination is not None else 1,
+            "releasable": bool(scorecard.releasable),
+            "traceId": scorecard.trace_id or "",
             "factors": json.loads(scorecard.factors_json or "[]"),
             "narrative": scorecard.narrative,
+            "agents": (json.loads(scorecard.brief_json or "{}").get("agents") or []),
+            "gaps": (json.loads(scorecard.brief_json or "{}").get("gaps") or []),
+            "langsmith": bool(json.loads(scorecard.brief_json or "{}").get("langsmith")),
             "artefactId": scorecard.artefact_id,
             "provider": scorecard.provider,
             "modelName": scorecard.model_name,

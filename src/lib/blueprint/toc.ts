@@ -4,38 +4,35 @@ export type TocGroup = { title: string; items: TocItem[] };
 export const TOC: TocGroup[] = [
   {
     title: "Programme",
-    items: [{ id: "overview", n: "01", label: "Project Overview" }],
-  },
-  {
-    title: "Technical design",
     items: [
-      { id: "oem", n: "02", label: "Data Model (OEM)" },
-      { id: "stageflow", n: "03", label: "Process Flow & Table Updates" },
+      { id: "overview", n: "01", label: "Project Overview" },
+      { id: "oem", n: "02", label: "Data Model (Schema)" },
+      { id: "stageflow", n: "03", label: "Process Flow & Records" },
       { id: "swarm", n: "04", label: "Agent Orchestration" },
     ],
   },
   {
     title: "Data & quality",
     items: [
-      { id: "data", n: "05", label: "RAG & Document Pipeline" },
-      { id: "mdm", n: "06", label: "Data Quality & MDM" },
+      { id: "data", n: "05", label: "Unstructured Data & RAG" },
+      { id: "mdm", n: "06", label: "Master Data Management" },
     ],
   },
   {
-    title: "Control & security",
+    title: "Control",
     items: [
       { id: "network", n: "07", label: "Zero-Trust Network" },
-      { id: "tprm", n: "08", label: "Vendor / LLM Risk" },
+      { id: "tprm", n: "08", label: "Third-Party / LLM Risk" },
       { id: "dr", n: "09", label: "DR & Continuity" },
       { id: "cyber", n: "10", label: "Cyber Incident Response" },
-      { id: "hallucination", n: "11", label: "Hallucination Response" },
-      { id: "eol", n: "12", label: "Model End-of-Life" },
+      { id: "hallucination", n: "11", label: "Hallucination / Drift" },
+      { id: "eol", n: "12", label: "Model Decommissioning" },
       { id: "rtbf", n: "13", label: "Right to be Forgotten" },
-      { id: "crossborder", n: "14", label: "Cross-Border Controls" },
+      { id: "crossborder", n: "14", label: "Cross-Border Transfer" },
     ],
   },
   {
-    title: "Commercial & people",
+    title: "Commercial",
     items: [
       { id: "green", n: "15", label: "Green AI" },
       { id: "sla", n: "16", label: "SLA Matrix" },
@@ -56,4 +53,4 @@ export const TOC: TocGroup[] = [
   },
 ];
 
-export const ALL_SECTIONS: TocItem[] = TOC.flatMap((g) => g.items);
+export const ALL_SECTIONS = TOC.flatMap((g) => g.items);

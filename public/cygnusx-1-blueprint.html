@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CygnusX-1 — SBA Loan Origination Swarm Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #0B1E33; --navy-2: #12314F; --steel: #2E5D82;
+    --paper: #F6F5F1; --paper-2: #EDEBE3; --ink: #1B2430; --ink-soft: #4C5866;
+    --gold: #A9793C; --gold-soft: #C9A876; --line: #D8D3C6; --white: #FFFFFF;
+    --good: #2F6B4F; --warn: #9C5B21; --bad: #8C2F2F;
+    --good-wash: #E4EFE8; --warn-wash: #F3EADF; --bad-wash: #F3E4E4; --accent-wash: #E8EEF2;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; font-size:16px; line-height:1.65;}
+  h1,h2,h3,h4{font-family:'IBM Plex Serif', serif; color:var(--navy); margin:0 0 .4em 0; font-weight:600;}
+  p{margin:0 0 1em 0; max-width:76ch;}
+  a{color:var(--steel);}
+  .cover{
+    background: linear-gradient(180deg, rgba(11,30,51,0.97), rgba(11,30,51,0.92)),
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 44px);
+    color:var(--paper); padding:6rem 6vw 4.5rem 6vw; position:relative; overflow:hidden;
+  }
+  .cover::after{content:""; position:absolute; right:-8%; top:-25%; width:600px; height:600px; border:1px solid rgba(201,168,118,0.22); border-radius:50%;}
+  .cover .eyebrow-row{display:flex; justify-content:space-between; align-items:baseline; font-family:'IBM Plex Mono', monospace; font-size:.76rem; color:var(--gold-soft); border-bottom:1px solid rgba(255,255,255,0.18); padding-bottom:1.1rem; margin-bottom:2.6rem; max-width:1150px; flex-wrap:wrap; gap:.5rem;}
+  .cover h1{color:#fff; font-size:clamp(2.1rem, 4vw, 3.2rem); line-height:1.1; max-width:19ch; margin-bottom:.9rem;}
+  .cover .subtitle{color:var(--paper-2); font-size:1.1rem; max-width:58ch; margin-bottom:2.2rem;}
+  .cover .meta-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1.4rem; max-width:1050px; border-top:1px solid rgba(255,255,255,0.18); padding-top:1.4rem;}
+  .meta-label{font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--gold-soft); margin-bottom:.3rem; display:block;}
+  .meta-value{font-size:.95rem; color:var(--paper); display:block;}
+  .btns{display:flex; flex-wrap:wrap; gap:.75rem; margin:0 0 2rem 0;}
+  .btn{display:inline-flex; align-items:center; height:48px; padding:0 1.25rem; border-radius:6px; font-weight:500; text-decoration:none;}
+  .btn-light{background:#fff; color:var(--navy);}
+  .btn-ghost{border:1px solid rgba(255,255,255,.3); color:var(--paper);}
+  .layout{display:grid; grid-template-columns:270px 1fr; max-width:1300px; margin:0 auto;}
+  nav.toc{padding:3rem 1.6rem 3rem 6vw; position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto; border-right:1px solid var(--line);}
+  nav.toc .toc-title{font-family:'IBM Plex Mono',monospace; font-size:.7rem; letter-spacing:.05em; color:var(--ink-soft); margin-bottom:1rem;}
+  nav.toc .grp{font-family:'IBM Plex Mono',monospace; font-size:.66rem; color:var(--gold); margin:1.1rem 0 .4rem 0; letter-spacing:.04em;}
+  nav.toc ol{list-style:none; margin:0; padding:0;}
+  nav.toc li{margin-bottom:.5rem;}
+  nav.toc a{text-decoration:none; color:var(--ink-soft); font-size:.82rem; display:flex; gap:.5rem;}
+  nav.toc a .n{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-size:.72rem; flex:none;}
+  nav.toc a:hover{color:var(--navy);}
+  main{padding:3.2rem 6vw 6rem 3.2rem; min-width:0;}
+  section{margin-bottom:4rem; scroll-margin-top:1.5rem;}
+  section h2{font-size:1.55rem; display:flex; align-items:baseline; gap:.65rem; border-bottom:1px solid var(--line); padding-bottom:.55rem; margin-bottom:1.2rem;}
+  section h2 .num{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-size:.95rem; font-weight:500;}
+  h3{font-size:1.1rem; margin-top:1.6rem;}
+  h4{font-size:.98rem; color:var(--steel); margin-top:1.1rem;}
+  .lede{font-size:1.03rem; color:var(--ink-soft); max-width:72ch;}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.3rem 0;}
+  .card{background:var(--white); border:1px solid var(--line); padding:1.2rem 1.3rem;}
+  .card h4{margin-top:0; color:var(--navy);}
+  .card p{font-size:.9rem; color:var(--ink-soft); margin-bottom:0;}
+  table{width:100%; border-collapse:collapse; margin:1.3rem 0 1.7rem 0; font-size:.89rem;}
+  th{text-align:left; font-weight:600; color:var(--navy); border-bottom:2px solid var(--navy); padding:.55rem .65rem; font-size:.82rem;}
+  td{padding:.6rem .65rem; border-bottom:1px solid var(--line); vertical-align:top; color:var(--ink);}
+  .matrix th.ctr,.matrix td.ctr{text-align:center;}
+  .matrix th .n{font-family:'IBM Plex Mono',monospace; font-size:.65rem; color:var(--gold); display:block;}
+  .muted{color:var(--ink-soft);}
+  ul{padding-left:1.25rem; max-width:74ch;}
+  ul li{margin-bottom:.4rem;}
+  blockquote.callout{border-left:3px solid var(--gold); background:var(--paper-2); margin:1.4rem 0; padding:1rem 1.25rem; font-size:.9rem; color:var(--navy-2);}
+  code{font-family:'IBM Plex Mono',monospace; font-size:.86em; background:var(--paper-2); padding:.1em .35em;}
+  footer{padding:2.6rem 6vw; background:var(--navy); color:var(--paper-2); font-size:.83rem;}
+  footer .foot-grid{display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem; max-width:1300px; margin:0 auto;}
+  .chips{display:flex; gap:.4rem; flex-wrap:wrap; margin:0 0 1.2rem 0;}
+  .chip{font-family:'IBM Plex Sans',sans-serif; font-size:.82rem; border:1px solid var(--line); background:#fff; padding:.55rem .75rem; cursor:pointer; text-align:left;}
+  .chip .n{display:block; font-family:'IBM Plex Mono',monospace; font-size:.65rem; color:var(--gold); margin-bottom:.15rem;}
+  .chip.on{background:var(--navy); color:#fff; border-color:var(--navy);}
+  .chip.on .n{color:var(--gold-soft);}
+  .verb{font-family:'IBM Plex Mono',monospace; font-size:.66rem; text-transform:uppercase; letter-spacing:.04em; padding:.12rem .4rem;}
+  .verb.create{background:var(--good-wash); color:var(--good);}
+  .verb.assign{background:var(--accent-wash); color:var(--navy);}
+  .verb.update{background:var(--warn-wash); color:var(--warn);}
+  .verb.gate{background:var(--bad-wash); color:var(--bad);}
+  .rec{border:1px solid var(--line); background:#fff; padding:1rem 1.1rem; margin:0 0 .7rem 0;}
+  .rec-h{display:flex; gap:.5rem; align-items:center; margin-bottom:.35rem; flex-wrap:wrap;}
+  .gatebox{background:var(--paper-2); border:1px solid var(--line); padding:.85rem 1rem; font-size:.9rem; margin:0 0 1.2rem 0;}
+  .stage-card{background:#fff; border:1px solid var(--line); padding:1.4rem 1.5rem;}
+  .overflow{overflow-x:auto;}
+  .diagram-wrap{background:#fff; border:1px solid var(--line); padding:1rem 1.2rem; margin:1.2rem 0; overflow-x:auto;}
+  .cap{font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--ink-soft); text-align:center; margin:.6rem 0 0;}
+  .legend{display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 1rem 0;}
+  @media (max-width: 900px){
+    .layout{grid-template-columns:1fr;}
+    nav.toc{position:relative; height:auto; border-right:none; border-bottom:1px solid var(--line); padding:2rem 6vw;}
+    main{padding:2.4rem 6vw;}
+    .grid-3{grid-template-columns:1fr;}
+    .cover .meta-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media print{
+    nav.toc, .btns{display:none;}
+    .layout{grid-template-columns:1fr;}
+    .cover{padding:2rem 1.5rem;}
+    a{color:inherit; text-decoration:none;}
+  }
+</style>
+<style>
+  :root{ --accent:#3d6f86; }
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.3rem 0;}
+  .schema-builder{background:#fff;border:1px solid var(--line);margin:1.2rem 0;overflow:hidden;}
+  .sb-toolbar{display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:.7rem .9rem;border-bottom:1px solid var(--line);background:var(--paper-2);}
+  .sb-kicker{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 .15rem;}
+  .sb-meta{font-size:.78rem;color:var(--ink-soft);margin:0;}
+  .sb-zoom{display:flex;gap:.35rem;}
+  .sb-zoom button,.sb-pal-btns button{height:32px;padding:0 .7rem;border:1px solid var(--line);background:#fff;color:var(--navy);font-size:.82rem;cursor:pointer;}
+  .sb-zoom button:hover,.sb-pal-btns button:hover{border-color:var(--accent);}
+  .sb-body{display:flex;min-height:36rem;max-height:44rem;}
+  .sb-palette{width:13.5rem;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:#fff;}
+  .sb-pal-top{padding:.75rem;border-bottom:1px solid var(--line);}
+  .sb-pal-top input{width:100%;height:34px;border:1px solid var(--line);padding:0 .6rem;font-size:.85rem;background:var(--paper);}
+  .sb-pal-btns{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem;}
+  .sb-pal-btns button:disabled{opacity:.4;cursor:not-allowed;}
+  .sb-pal-list{flex:1;overflow:auto;padding:.4rem .5rem;}
+  .sb-pal-item{display:flex;align-items:center;gap:.45rem;padding:.35rem .4rem;font-size:.84rem;cursor:pointer;}
+  .sb-pal-item:hover,.sb-pal-item.sel{background:var(--accent-wash);color:var(--navy);}
+  .sb-pal-item.off-label{opacity:.55;}
+  .sb-pal-foot{border-top:1px solid var(--line);padding:.75rem;font-size:.75rem;color:var(--ink-soft);background:var(--paper);line-height:1.4;}
+  .sb-viewport{flex:1;min-width:0;overflow:auto;--sb-z:.88;background:#fff;
+    background-image:linear-gradient(rgba(216,211,198,.7) 1px, transparent 1px),linear-gradient(90deg, rgba(216,211,198,.7) 1px, transparent 1px);
+    background-size:24px 24px;}
+  .sb-sizer{width:calc(1720px * var(--sb-z));height:calc(1460px * var(--sb-z));}
+  .sb-canvas{position:relative;transform:scale(var(--sb-z));transform-origin:0 0;}
+  .sb-svg{position:absolute;inset:0;pointer-events:none;}
+  .sb-line.off{display:none;}
+  .sb-line.dim{opacity:.18;}
+  .sb-card{position:absolute;background:#fff;box-shadow:0 0 0 1px var(--line), 0 1px 2px rgba(16,37,54,.06);overflow:hidden;z-index:1;cursor:pointer;}
+  .sb-card.off{display:none;}
+  .sb-card.dim{opacity:.28;}
+  .sb-card.on{z-index:3;box-shadow:0 0 0 2px var(--accent), 0 8px 18px rgba(16,37,54,.12);}
+  .sb-head{height:34px;display:flex;align-items:center;padding:0 .7rem;color:#fff;font-size:.86rem;font-weight:500;}
+  .sb-card.tone-master .sb-head{background:var(--navy);}
+  .sb-card.tone-party .sb-head{background:var(--navy-2);}
+  .sb-card.tone-child .sb-head{background:#1B2430;}
+  .sb-card ul{list-style:none;margin:0;padding:0;}
+  .sb-field{display:flex;align-items:center;gap:.35rem;height:22px;padding:0 .45rem 0 0;border-bottom:1px solid rgba(216,211,198,.85);background:#fff;}
+  .sb-field .tick{width:2px;align-self:stretch;background:transparent;flex:none;}
+  .sb-field.req .tick{background:var(--bad);}
+  .sb-field .api{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--ink);}
+  .sb-field .typ{flex:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;}
+  .t-lookup{color:var(--accent);}
+  .t-md{color:var(--bad);}
+  .t-id{color:var(--navy);}
+  .t-plain{color:#6b7580;}
+  .sb-field.sb-more{display:none;}
+  .sb-card.open .sb-field.sb-more{display:flex;}
+  .sb-more-btn{display:block;width:100%;height:26px;border:0;background:#fff;color:var(--accent);font-size:.68rem;text-align:left;padding:0 .7rem;cursor:pointer;}
+  .sb-more-btn:hover{background:var(--accent-wash);}
+  .sb-legend{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;padding:.55rem .9rem;border-top:1px solid var(--line);background:var(--paper);font-size:.72rem;color:var(--ink-soft);}
+  .sb-legend i{display:inline-block;vertical-align:middle;margin-right:.35rem;}
+  .lg-lookup{width:8px;height:8px;border-radius:50%;border:2px solid var(--accent);background:#fff;}
+  .lg-md{width:8px;height:8px;background:var(--bad);transform:rotate(45deg);}
+  .lg-req{width:2px;height:12px;background:var(--bad);}
+  @media (max-width: 900px){
+    .grid-2{grid-template-columns:1fr;}
+    .sb-body{flex-direction:column;max-height:none;}
+    .sb-palette{width:100%;border-right:none;border-bottom:1px solid var(--line);max-height:9.5rem;}
+    .sb-viewport{min-height:24rem;height:28rem;}
+  }
+  @media print{
+    .sb-palette,.sb-zoom{display:none;}
+    .sb-body{max-height:none;}
+    .sb-viewport{overflow:visible;height:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="eyebrow-row">
+    <span>SBA LENDING · PROJECT BLUEPRINT · CONFIDENTIAL</span>
+    <span>CYGNUSX-1 · V1.4 · DOWNLOADABLE HTML</span>
+  </div>
+  <h1>CygnusX-1 SBA Loan Origination Swarm</h1>
+  <p class="subtitle">Data model, process flow with table updates, and agent orchestration for 7(a), Express, and 504. Process is the parent of the file. A human underwriter of record approves every credit decision.</p>
+  <div class="btns">
+    <a class="btn btn-light" href="#oem">Data model</a>
+    <a class="btn btn-ghost" href="#stageflow">Process flow & tables</a>
+    <a class="btn btn-ghost" href="#swarm">Agent orchestration</a>
+    <a class="btn btn-ghost" href="cygnusx-1-blueprint.html" download="CygnusX-1-Blueprint.html">Download HTML</a>
+  </div>
+  <div class="meta-grid">
+    <div><span class="meta-label">PROGRAMME</span><span class="meta-value">CygnusX-1</span></div>
+    <div><span class="meta-label">DOMAIN</span><span class="meta-value">SBA origination</span></div>
+    <div><span class="meta-label">AUTONOMY</span><span class="meta-value">L2 at launch → L3 gated</span></div>
+    <div><span class="meta-label">SPINE</span><span class="meta-value">processId</span></div>
+  </div>
+</div>
+
+<div class="layout">
+<nav class="toc">
+  <div class="toc-title">CONTENTS</div>
+  <ol>
+    <div class="grp">PROGRAMME</div>
+    <li><a href="#overview"><span class="n">01</span> Project Overview</a></li>
+    <li><a href="#oem"><span class="n">02</span> Data Model (Schema)</a></li>
+    <li><a href="#stageflow"><span class="n">03</span> Process Flow &amp; Records</a></li>
+    <li><a href="#swarm"><span class="n">04</span> Agent Orchestration</a></li>
+    <div class="grp">DATA &AMP; QUALITY</div>
+    <li><a href="#data"><span class="n">05</span> Unstructured Data &amp; RAG</a></li>
+    <li><a href="#mdm"><span class="n">06</span> Master Data Management</a></li>
+    <div class="grp">CONTROL</div>
+    <li><a href="#network"><span class="n">07</span> Zero-Trust Network</a></li>
+    <li><a href="#tprm"><span class="n">08</span> Third-Party / LLM Risk</a></li>
+    <li><a href="#dr"><span class="n">09</span> DR &amp; Continuity</a></li>
+    <li><a href="#cyber"><span class="n">10</span> Cyber Incident Response</a></li>
+    <li><a href="#hallucination"><span class="n">11</span> Hallucination / Drift</a></li>
+    <li><a href="#eol"><span class="n">12</span> Model Decommissioning</a></li>
+    <li><a href="#rtbf"><span class="n">13</span> Right to be Forgotten</a></li>
+    <li><a href="#crossborder"><span class="n">14</span> Cross-Border Transfer</a></li>
+    <div class="grp">COMMERCIAL</div>
+    <li><a href="#green"><span class="n">15</span> Green AI</a></li>
+    <li><a href="#sla"><span class="n">16</span> SLA Matrix</a></li>
+    <li><a href="#lockin"><span class="n">17</span> Vendor Lock-in</a></li>
+    <li><a href="#tco"><span class="n">18</span> Budget &amp; TCO</a></li>
+    <li><a href="#ocm"><span class="n">19</span> Change Management</a></li>
+    <li><a href="#training"><span class="n">20</span> Training &amp; Adoption</a></li>
+    <li><a href="#prompts"><span class="n">21</span> Prompt Catalog</a></li>
+    <div class="grp">VALUE</div>
+    <li><a href="#kpi"><span class="n">22</span> Post-Deployment KPIs</a></li>
+    <li><a href="#roi"><span class="n">23</span> ROI &amp; Value</a></li>
+    <li><a href="#glossary"><span class="n">24</span> Glossary</a></li>
+  </ol>
+</nav>
+
+<main>
+<section id="overview">
+  <h2><span class="num">01</span> Project Overview</h2>
+  <p class="lede"><strong>CygnusX-1</strong> automates SBA Quote-to-Cash — CIP intake through spreading, collateral, underwriting, documentation, E-Tran, and closure — with a supervisor-coordinated swarm. A human underwriter of record approves every credit decision. The swarm compresses preparation, not the decision.</p>
+  <div class="grid-3">
+    <div class="card"><h4>Scope in</h4><p>7(a), Express, and 504 origination. Customer login, Business capture, consumer and commercial credit, OFAC, spreading, collateral, credit memo, E-Tran, dual-control ledger post.</p></div>
+    <div class="card"><h4>Scope out (phase 1)</h4><p>Servicing after seal, fully autonomous approval, syndications, and any product outside SBA 7(a)/504.</p></div>
+    <div class="card"><h4>Autonomy</h4><p>Launches at L2 (agent prepares, human approves). L3 only for named low-risk sub-tasks after MRM sign-off.</p></div>
+  </div>
+  <blockquote class="callout"><strong>Accountability —</strong> the swarm is never the credit decision-maker. Every output is a recommendation with evidence. The underwriter’s approval is the action of record.</blockquote>
+</section>
+
+<section id="oem">
+  <h2><span class="num">02</span> Data Model (Schema)</h2>
+  <p class="lede">Account is the customer: a Person Account for an individual, a Business Account for the company. Deal is the file, and the red line is its master-detail to that Account. LOS Product is the loan — a Deal can hold more than one. Related parties, collateral, metrics, the credit decision, and requirements all hang off the loan.</p>
+  <blockquote class="callout"><strong>How to read it —</strong> required fields have a red tick on the left. Blue lines are lookups. The red line is Deal to Account. A guarantor, co-borrower, or authorized signor is a Related Party on that LOS Product, pointing at an Account.</blockquote>
+  <div class="schema-builder" id="schema-builder">
+  <div class="sb-toolbar">
+    <div>
+      <p class="sb-kicker">Schema builder</p>
+      <p class="sb-meta" id="sb-meta">11 objects · 21 relationships</p>
+    </div>
+    <div class="sb-zoom">
+      <button type="button" id="sb-zoom-out" aria-label="Zoom out">−</button>
+      <button type="button" id="sb-zoom-in" aria-label="Zoom in">+</button>
+      <button type="button" id="sb-fit">Fit</button>
+    </div>
+  </div>
+  <div class="sb-body">
+    <aside class="sb-palette">
+      <div class="sb-pal-top">
+        <input type="search" id="sb-find" placeholder="Find object" autocomplete="off">
+        <div class="sb-pal-btns">
+          <button type="button" id="sb-core">Core</button>
+          <button type="button" id="sb-all">All</button>
+          <button type="button" id="sb-related" disabled>Related</button>
+        </div>
+      </div>
+      <div class="sb-pal-list" id="sb-pal-list"><label class="sb-pal-item"><input type="checkbox" data-obj="Deal Approval" checked> Deal Approval</label><label class="sb-pal-item"><input type="checkbox" data-obj="Deal" checked> Deal</label><label class="sb-pal-item"><input type="checkbox" data-obj="LOS Product" checked> LOS Product</label><label class="sb-pal-item"><input type="checkbox" data-obj="Account" checked> Account</label><label class="sb-pal-item"><input type="checkbox" data-obj="Metric" checked> Metric</label><label class="sb-pal-item"><input type="checkbox" data-obj="Related Party Metric" checked> Related Party Metric</label><label class="sb-pal-item"><input type="checkbox" data-obj="Collateral Pledged" checked> Collateral Pledged</label><label class="sb-pal-item"><input type="checkbox" data-obj="Asset" checked> Asset</label><label class="sb-pal-item"><input type="checkbox" data-obj="Deal Team Member" checked> Deal Team Member</label><label class="sb-pal-item"><input type="checkbox" data-obj="Requirements" checked> Requirements</label><label class="sb-pal-item"><input type="checkbox" data-obj="Related Party" checked> Related Party</label></div>
+      <div class="sb-pal-foot" id="sb-pal-foot">Click an object to highlight its lookups and master-details.</div>
+    </aside>
+    <div class="sb-viewport" id="sb-viewport">
+      <div class="sb-sizer" id="sb-sizer">
+        <div class="sb-canvas" id="sb-canvas" style="width:1720px;height:1460px">
+          <svg class="sb-svg" width="1720" height="1460" aria-label="Schema builder — table relationships">
+    <defs>
+      <marker id="sb-lookup" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+        <circle cx="5" cy="5" r="3.2" fill="#fff" stroke="#3d6f86" stroke-width="1.4"/>
+      </marker>
+      <marker id="sb-master" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+        <polygon points="2,6 6,1.5 11,6 6,10.5" fill="#8C2F2F"/>
+      </marker>
+      <marker id="sb-many" markerWidth="12" markerHeight="12" refX="1" refY="6" orient="auto">
+        <path d="M11,1 L1,6 L11,11 M11,6 L1,6" fill="none" stroke="#6b7580" stroke-width="1.3"/>
+      </marker>
+      <marker id="sb-one" markerWidth="10" markerHeight="10" refX="1" refY="5" orient="auto">
+        <path d="M2,1 L2,9 M6,1 L6,9" fill="none" stroke="#6b7580" stroke-width="1.3"/>
+      </marker>
+    </defs>
+    <path class="sb-line" data-from="Deal" data-to="Account" d="M 648 119 C 674 119, 674 197, 700 197" fill="none" stroke="var(--bad)" stroke-width="2.1" marker-end="url(#sb-master)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="LOS Product" data-to="Deal" d="M 458 429 C 429 429, 429 25, 400 25" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="LOS Product" data-to="Account" d="M 458 451 C 579 451, 579 197, 700 197" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Related Party" data-to="LOS Product" d="M 1140 767 C 799 767, 799 357, 458 357" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Related Party" data-to="Account" d="M 1140 789 C 1044 789, 1044 197, 948 197" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Deal Approval" data-to="LOS Product" d="M 268 95 C 239 95, 239 357, 210 357" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Deal Approval" data-to="Deal" d="M 268 117 C 334 117, 334 25, 400 25" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Requirements" data-to="LOS Product" d="M 760 847 C 609 847, 609 357, 458 357" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Requirements" data-to="Related Party" d="M 1008 869 C 1074 869, 1074 717, 1140 717" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Requirements" data-to="Collateral Pledged" d="M 760 891 C 514 891, 514 777, 268 777" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Requirements" data-to="Account" d="M 760 913 C 854 913, 854 197, 948 197" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Metric" data-to="LOS Product" d="M 1060 103 C 759 103, 759 357, 458 357" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Metric" data-to="Account" d="M 1060 125 C 1004 125, 1004 197, 948 197" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Related Party Metric" data-to="Related Party" d="M 1400 83 C 1394 83, 1394 717, 1388 717" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Related Party Metric" data-to="LOS Product" d="M 1400 105 C 929 105, 929 357, 458 357" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Related Party Metric" data-to="Account" d="M 1400 127 C 1174 127, 1174 197, 948 197" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Collateral Pledged" data-to="LOS Product" d="M 268 827 C 239 827, 239 357, 210 357" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Collateral Pledged" data-to="Asset" d="M 268 849 C 259 849, 259 1097, 250 1097" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Collateral Pledged" data-to="Account" d="M 268 871 C 484 871, 484 197, 700 197" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Asset" data-to="Account" d="M 498 1147 C 599 1147, 599 197, 700 197" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+<path class="sb-line" data-from="Deal Team Member" data-to="Deal" d="M 540 1167 C 594 1167, 594 25, 648 25" fill="none" stroke="var(--accent)" stroke-width="2.1" marker-end="url(#sb-lookup)" marker-start="url(#sb-many)"/>
+  </svg>
+          <article class="sb-card tone-child" data-obj="Deal Approval" style="left:20px;top:28px;width:248px">
+      <header class="sb-head">Deal Approval</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">approvalId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">losProductId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">dealId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">approverName</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">level</span><span class="typ t-plain">Picklist</span></li><li class="sb-field req"><span class="tick"></span><span class="api">status</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">decision</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">riskGrade</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">conditions</span><span class="typ t-plain">Long Text</span></li><li class="sb-field"><span class="tick"></span><span class="api">decidedOn</span><span class="typ t-plain">Date</span></li></ul>
+      
+    </article>
+<article class="sb-card tone-master" data-obj="Deal" style="left:400px;top:8px;width:248px">
+      <header class="sb-head">Deal</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">dealId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">dealNumber</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">name</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">accountId</span><span class="typ t-md">Master-Detail</span></li><li class="sb-field req"><span class="tick"></span><span class="api">stage</span><span class="typ t-plain">Picklist</span></li><li class="sb-field req"><span class="tick"></span><span class="api">stageStatus</span><span class="typ t-plain">Picklist</span></li><li class="sb-field req"><span class="tick"></span><span class="api">status</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">ownerId</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">openedOn</span><span class="typ t-plain">Date</span></li></ul>
+      
+    </article>
+<article class="sb-card tone-party" data-obj="LOS Product" style="left:210px;top:340px;width:248px">
+      <header class="sb-head">LOS Product</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">losProductId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">name</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">dealId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">accountId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">productType</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">purpose</span><span class="typ t-plain">Picklist</span></li><li class="sb-field req"><span class="tick"></span><span class="api">amount</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">interestRate</span><span class="typ t-plain">Percent</span></li><li class="sb-field"><span class="tick"></span><span class="api">spread</span><span class="typ t-plain">Percent</span></li><li class="sb-field"><span class="tick"></span><span class="api">indexRate</span><span class="typ t-plain">Picklist</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">termMonths</span><span class="typ t-plain">Number</span></li><li class="sb-field sb-more req"><span class="tick"></span><span class="api">status</span><span class="typ t-plain">Picklist</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">closeDate</span><span class="typ t-plain">Date</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">sbaGuarantyPct</span><span class="typ t-plain">Percent</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">guarantyNumber</span><span class="typ t-plain">Text</span></li></ul>
+      <button type="button" class="sb-more-btn" data-expand="LOS Product">+ 5 more fields</button>
+    </article>
+<article class="sb-card tone-master" data-obj="Account" style="left:700px;top:180px;width:248px">
+      <header class="sb-head">Account</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">accountId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">name</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">recordType</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">legalName</span><span class="typ t-plain">Text</span></li><li class="sb-field"><span class="tick"></span><span class="api">taxIdLast4</span><span class="typ t-plain">Text</span></li><li class="sb-field"><span class="tick"></span><span class="api">email</span><span class="typ t-plain">Email</span></li><li class="sb-field"><span class="tick"></span><span class="api">phone</span><span class="typ t-plain">Phone</span></li><li class="sb-field"><span class="tick"></span><span class="api">naicsCode</span><span class="typ t-plain">Text</span></li><li class="sb-field"><span class="tick"></span><span class="api">businessType</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">incorporatedOn</span><span class="typ t-plain">Date</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">billingCity</span><span class="typ t-plain">Text</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">billingState</span><span class="typ t-plain">Picklist</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">annualReceipts</span><span class="typ t-plain">Number</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">employeeCount</span><span class="typ t-plain">Number</span></li></ul>
+      <button type="button" class="sb-more-btn" data-expand="Account">+ 4 more fields</button>
+    </article>
+<article class="sb-card tone-child" data-obj="Metric" style="left:1060px;top:36px;width:248px">
+      <header class="sb-head">Metric</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">metricId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">losProductId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">accountId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">metricType</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">value</span><span class="typ t-plain">Number</span></li><li class="sb-field req"><span class="tick"></span><span class="api">asOf</span><span class="typ t-plain">Date</span></li><li class="sb-field"><span class="tick"></span><span class="api">source</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">outcome</span><span class="typ t-plain">Picklist</span></li></ul>
+      
+    </article>
+<article class="sb-card tone-child" data-obj="Related Party Metric" style="left:1400px;top:16px;width:248px">
+      <header class="sb-head">Related Party Metric</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">partyMetricId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">relatedPartyId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">losProductId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">accountId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">metricType</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">score</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">outstandingAmount</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">utilizationPct</span><span class="typ t-plain">Percent</span></li><li class="sb-field"><span class="tick"></span><span class="api">yearsSinceFirstCredit</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">pastDueAmount</span><span class="typ t-plain">Number</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">lastCheckedAt</span><span class="typ t-plain">Date</span></li><li class="sb-field sb-more"><span class="tick"></span><span class="api">outcome</span><span class="typ t-plain">Picklist</span></li></ul>
+      <button type="button" class="sb-more-btn" data-expand="Related Party Metric">+ 2 more fields</button>
+    </article>
+<article class="sb-card tone-child" data-obj="Collateral Pledged" style="left:20px;top:760px;width:248px">
+      <header class="sb-head">Collateral Pledged</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">pledgeId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">losProductId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">assetId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">accountId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">lienPosition</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">pledgeAmount</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">lendableValue</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">advanceRate</span><span class="typ t-plain">Percent</span></li><li class="sb-field"><span class="tick"></span><span class="api">coveragePct</span><span class="typ t-plain">Percent</span></li></ul>
+      
+    </article>
+<article class="sb-card tone-child" data-obj="Asset" style="left:250px;top:1080px;width:248px">
+      <header class="sb-head">Asset</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">assetId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">accountId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">name</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">assetType</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">location</span><span class="typ t-plain">Text</span></li><li class="sb-field"><span class="tick"></span><span class="api">appraisedValue</span><span class="typ t-plain">Number</span></li><li class="sb-field"><span class="tick"></span><span class="api">appraisalDate</span><span class="typ t-plain">Date</span></li><li class="sb-field"><span class="tick"></span><span class="api">advanceRate</span><span class="typ t-plain">Percent</span></li><li class="sb-field"><span class="tick"></span><span class="api">insured</span><span class="typ t-plain">Checkbox</span></li></ul>
+      
+    </article>
+<article class="sb-card tone-child" data-obj="Deal Team Member" style="left:540px;top:1100px;width:248px">
+      <header class="sb-head">Deal Team Member</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">memberId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">dealId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">role</span><span class="typ t-plain">Picklist</span></li><li class="sb-field req"><span class="tick"></span><span class="api">userName</span><span class="typ t-plain">Text</span></li><li class="sb-field"><span class="tick"></span><span class="api">isPrimary</span><span class="typ t-plain">Checkbox</span></li><li class="sb-field"><span class="tick"></span><span class="api">assignedAtStage</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">assignedOn</span><span class="typ t-plain">Date</span></li></ul>
+      
+    </article>
+<article class="sb-card tone-child" data-obj="Requirements" style="left:760px;top:780px;width:248px">
+      <header class="sb-head">Requirements</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">requirementId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">losProductId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">relatedPartyId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">pledgeId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field"><span class="tick"></span><span class="api">accountId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">name</span><span class="typ t-plain">Text</span></li><li class="sb-field req"><span class="tick"></span><span class="api">category</span><span class="typ t-plain">Picklist</span></li><li class="sb-field req"><span class="tick"></span><span class="api">status</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">dueStage</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">satisfiedOn</span><span class="typ t-plain">Date</span></li></ul>
+      
+    </article>
+<article class="sb-card tone-party" data-obj="Related Party" style="left:1140px;top:700px;width:248px">
+      <header class="sb-head">Related Party</header>
+      <ul><li class="sb-field req"><span class="tick"></span><span class="api">relatedPartyId</span><span class="typ t-id">Id</span></li><li class="sb-field req"><span class="tick"></span><span class="api">losProductId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">accountId</span><span class="typ t-lookup">Lookup</span></li><li class="sb-field req"><span class="tick"></span><span class="api">role</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">ownershipPct</span><span class="typ t-plain">Percent</span></li><li class="sb-field"><span class="tick"></span><span class="api">guaranteeType</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">isPrimary</span><span class="typ t-plain">Checkbox</span></li><li class="sb-field"><span class="tick"></span><span class="api">ofacResult</span><span class="typ t-plain">Picklist</span></li><li class="sb-field"><span class="tick"></span><span class="api">creditOutcome</span><span class="typ t-plain">Picklist</span></li></ul>
+      
+    </article>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sb-legend">
+    <span><i class="lg-lookup"></i> Lookup</span>
+    <span><i class="lg-md"></i> Master-detail</span>
+    <span><i class="lg-req"></i> Required field</span>
+    <span class="muted">Core is the origination file. All adds stage children.</span>
+  </div>
+</div>
+  <h3>Relationships</h3>
+  <p>Child → parent. Drawn only when both objects are on the canvas. Master-detail hangs the child off the file; lookup is a typed pointer.</p>
+  <table><thead><tr><th>Child</th><th>Parent</th><th>Field</th><th>Kind</th><th>Card.</th></tr></thead><tbody>
+<tr><td>Deal</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb gate&quot;&gt;Master-Detail&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>LOS Product</td><td>Deal</td><td>dealId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>LOS Product</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Related Party</td><td>LOS Product</td><td>losProductId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Related Party</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Deal Approval</td><td>LOS Product</td><td>losProductId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Deal Approval</td><td>Deal</td><td>dealId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Requirements</td><td>LOS Product</td><td>losProductId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Requirements</td><td>Related Party</td><td>relatedPartyId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Requirements</td><td>Collateral Pledged</td><td>pledgeId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Requirements</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Metric</td><td>LOS Product</td><td>losProductId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Metric</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Related Party Metric</td><td>Related Party</td><td>relatedPartyId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Related Party Metric</td><td>LOS Product</td><td>losProductId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Related Party Metric</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Collateral Pledged</td><td>LOS Product</td><td>losProductId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Collateral Pledged</td><td>Asset</td><td>assetId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Collateral Pledged</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Asset</td><td>Account</td><td>accountId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+<tr><td>Deal Team Member</td><td>Deal</td><td>dealId</td><td>&lt;span class=&quot;verb assign&quot;&gt;Lookup&lt;/span&gt;</td><td>1:N</td></tr>
+</tbody></table>
+  <h3>Table catalog</h3>
+  <table><thead><tr><th>Table</th><th>PK</th><th>Stage</th><th>Purpose</th></tr></thead><tbody>
+<tr><td>Account</td><td>accountId</td><td>01</td><td>Customer. Person Account is the individual. Business Account is the company. Roles are not stored here.</td></tr>
+<tr><td>Deal</td><td>dealId</td><td>01</td><td>The Process. One origination file and its stage. Master-detail child of the borrower Account. Holds many loans.</td></tr>
+<tr><td>LOS Product</td><td>losProductId</td><td>01</td><td>The loan. Many per Deal. Amount, rate, term, purpose, product type, and guaranty live here.</td></tr>
+<tr><td>Related Party</td><td>relatedPartyId</td><td>01</td><td>A party on one loan. Borrower, co-borrower, guarantor, authorized signor, or owner. Points at an Account.</td></tr>
+<tr><td>Deal Team Member</td><td>memberId</td><td>01</td><td>Bank seat on the file. RM, processor, underwriter, closer.</td></tr>
+<tr><td>Related Party Metric</td><td>partyMetricId</td><td>02</td><td>Credit or fraud snapshot for a Related Party on a loan. One passing score qualifies Pre-application.</td></tr>
+<tr><td>Metric</td><td>metricId</td><td>03</td><td>Ratio for one loan. DSCR, global cash flow, size standard, LTV.</td></tr>
+<tr><td>Asset</td><td>assetId</td><td>04</td><td>Something an Account owns. Not itself a lien.</td></tr>
+<tr><td>Collateral Pledged</td><td>pledgeId</td><td>04</td><td>Lien of an Asset onto one loan (LOS Product). Coverage and lien position live here.</td></tr>
+<tr><td>Deal Approval</td><td>approvalId</td><td>05</td><td>Human credit action for one loan. A Deal with several loans has one approval per loan.</td></tr>
+<tr><td>Requirements</td><td>requirementId</td><td>06</td><td>Condition or document for one loan. May also point at a party or a pledge.</td></tr>
+</tbody></table>
+  <h3>Columns by table</h3>
+  <div class="grid-2"><article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Account</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 01</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Customer. Person Account is the individual. Business Account is the company. Roles are not stored here.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">accountId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">name / recordType</td><td class="muted">Person Account | Business Account</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">taxIdLast4 / email / phone</td><td class="muted">CIP. Full tax id is tokenized off this row</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">naicsCode / annualReceipts / employeeCount</td><td class="muted">Size inputs on a Business Account</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Deal</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 01</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">The Process. One origination file and its stage. Master-detail child of the borrower Account. Holds many loans.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">dealId / dealNumber</td><td class="muted">PK and file number</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">accountId</td><td class="muted">Master-detail → Account, required</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">stage / stageStatus / status</td><td class="muted">File lifecycle, not facility terms</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">ownerId / openedOn</td><td class="muted">RM and open date</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">LOS Product</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 01</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">The loan. Many per Deal. Amount, rate, term, purpose, product type, and guaranty live here.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">losProductId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">dealId / accountId</td><td class="muted">Lookups. One deal, many loans</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">productType / purpose / amount</td><td class="muted">7(a), 504, Express</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">interestRate / termMonths / sbaGuarantyPct</td><td class="muted">Facility terms</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Related Party</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 01</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">A party on one loan. Borrower, co-borrower, guarantor, authorized signor, or owner. Points at an Account.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">relatedPartyId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">losProductId / accountId</td><td class="muted">Loan and the person or business</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">role / ownershipPct / guaranteeType</td><td class="muted">Role on that loan only</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">ofacResult / creditOutcome</td><td class="muted">Qualifying checks</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Deal Team Member</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 01</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Bank seat on the file. RM, processor, underwriter, closer.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">memberId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">dealId / role / userName</td><td class="muted">Who is on the Deal</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">isPrimary / assignedAtStage</td><td class="muted">Seat</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Related Party Metric</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 02</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Credit or fraud snapshot for a Related Party on a loan. One passing score qualifies Pre-application.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">partyMetricId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">relatedPartyId / losProductId / accountId</td><td class="muted">Lookups</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">metricType / score / lastCheckedAt</td><td class="muted">FICO, SBSS, Paynet, OFAC</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">yearsSinceFirstCredit / outstandingAmount / utilizationPct</td><td class="muted">Tradeline facts</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Metric</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 03</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Ratio for one loan. DSCR, global cash flow, size standard, LTV.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">metricId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">losProductId / accountId</td><td class="muted">Lookups</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">metricType / value / asOf / outcome</td><td class="muted">Measured result</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Asset</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 04</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Something an Account owns. Not itself a lien.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">assetId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">accountId</td><td class="muted">Lookup → owner</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">assetType / location / appraisedValue</td><td class="muted">RE, equipment, deposit, vehicle</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Collateral Pledged</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 04</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Lien of an Asset onto one loan (LOS Product). Coverage and lien position live here.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">pledgeId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">losProductId / assetId / accountId</td><td class="muted">Lookups</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">lienPosition / pledgeAmount / lendableValue</td><td class="muted">Coverage</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Deal Approval</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 05</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Human credit action for one loan. A Deal with several loans has one approval per loan.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">approvalId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">losProductId / dealId</td><td class="muted">Loan first, file second</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">approverName / level / decision / riskGrade</td><td class="muted">Action of record</td></tr>
+  </tbody></table>
+</article>
+<article class="card" style="padding:1rem 1.1rem">
+  <div style="display:flex;justify-content:space-between;gap:.6rem;align-items:baseline">
+    <h4 style="margin:0">Requirements</h4>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--gold)">stage 06</span>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink-soft);margin:.35rem 0 .7rem">Condition or document for one loan. May also point at a party or a pledge.</p>
+  <table style="margin:0"><tbody>
+    <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">requirementId</td><td class="muted">PK</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">losProductId / relatedPartyId / pledgeId</td><td class="muted">Lookups</td></tr><tr><td style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--navy);white-space:nowrap">category / status / dueStage</td><td class="muted">Document, condition, policy, insurance</td></tr>
+  </tbody></table>
+</article></div>
+</section>
+
+<section id="stageflow">
+  <h2><span class="num">03</span> Process Flow & Table Updates</h2>
+  <p class="lede">Quote-to-Cash is eight sequential stages. Incomplete work loops inside the stage. A failed gate (consumer credit, commercial credit, OFAC, underwriter reject) closes the process. The matrix shows which canonical table each stage creates, updates, assigns, or gates.</p>
+  <blockquote class="callout"><strong>01 Intake —</strong> Customer, email verification + ApplicantAccount, Business, then Loan. <strong>02 Pre-application —</strong> consumer CreditPull, commercial CreditPull, OFAC. RM Elena Voss starts the file; credit and fraud join at 02.</blockquote>
+  <h3>What each stage writes</h3>
+  <table><thead><tr><th>Stage</th><th>Creates</th><th>Updates / assigns</th><th>Gate</th></tr></thead><tbody>
+<tr><td>01 Intake</td><td>Process, Customer, ApplicantAccount, Address, Business, Loan, ProcessTeam, ProcessParticipant</td><td>Process.currentStage</td><td>emailVerified + Business + Loan saved</td></tr>
+<tr><td>02 Pre-application</td><td>CreditPull (optional), SanctionsScreen (optional)</td><td>ProcessTeam, Process.currentStage</td><td>Any one pass: consumer credit, business credit, or fraud.</td></tr>
+<tr><td>03 Processing</td><td>KybReport, SbaProfile (mockReport)</td><td>Loan, Business</td><td>Mock processing pack: KYB + SBA profile</td></tr>
+<tr><td>04 Collateral</td><td>CollateralItem, CollateralPledge, InsurancePolicy</td><td>Loan.primaryCollateralId</td><td>Pledged item + insurance/lien review (mock UCC)</td></tr>
+<tr><td>05 Underwriter</td><td>ScorecardResult, Decision</td><td>Loan (rate, guarantyPercent, dates), Process.currentStage</td><td>Human Decision: approve → 06, pend → loop, reject → close</td></tr>
+<tr><td>06 Documents</td><td>Document</td><td>Document.status, Loan.closingDate, InsurancePolicy</td><td>Required package imaged (ACK) and reviewed</td></tr>
+<tr><td>07 Financing</td><td>GuarantySubmission, LedgerDraft</td><td>Loan.guarantyNumber / guarantyStatus / fundedOn</td><td>Guaranty accepted + ledger draft ready</td></tr>
+<tr><td>08 Closure</td><td>LedgerPost, AuditSeal</td><td>Process.stageStatus = sealed, Loan servicing dates</td><td>Dual-control post + seal. Origination writes stop.</td></tr>
+</tbody></table>
+  <h3>Table update matrix</h3>
+  <p>Read across a table to see its lifecycle. Account and Deal open the file. Each LOS Product is a loan on that Deal. Related parties, collateral, metrics, Deal Approval, and Requirements are per loan. Related Party Metric is the credit check.</p>
+  <div class="legend">
+    <span class="verb create">C Create row</span>
+    <span class="verb update">U Update columns</span>
+    <span class="verb assign">A Assign FK / staff / roles</span>
+    <span class="verb gate">G Gate on this table</span>
+  </div>
+  <div class="overflow"><table class="matrix"><thead><tr><th>Table</th><th class="ctr"><span class="n">01</span><br>Intake</th><th class="ctr"><span class="n">02</span><br>Pre-app</th><th class="ctr"><span class="n">03</span><br>Processing</th><th class="ctr"><span class="n">04</span><br>Collateral</th><th class="ctr"><span class="n">05</span><br>Underwriter</th><th class="ctr"><span class="n">06</span><br>Documents</th><th class="ctr"><span class="n">07</span><br>Financing</th><th class="ctr"><span class="n">08</span><br>Closure</th></tr></thead><tbody>
+<tr><td>Account</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr muted">·</td><td class="ctr"><span class="verb update">U</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Deal</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr"><span class="verb gate">G</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb gate">G</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb gate">U/G</span></td></tr>
+<tr><td>LOS Product</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td></tr>
+<tr><td>Related Party</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr"><span class="verb assign">A</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Deal Team Member</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr"><span class="verb assign">A</span></td><td class="ctr"><span class="verb assign">A</span></td><td class="ctr muted">·</td><td class="ctr"><span class="verb assign">A</span></td><td class="ctr"><span class="verb assign">A</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Related Party Metric</td><td class="ctr muted">·</td><td class="ctr"><span class="verb gate">C/G</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Metric</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Asset</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Collateral Pledged</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Deal Approval</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr"><span class="verb gate">C/G</span></td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr muted">·</td></tr>
+<tr><td>Requirements</td><td class="ctr muted">·</td><td class="ctr muted">·</td><td class="ctr"><span class="verb create">C</span></td><td class="ctr"><span class="verb create">C</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">C/U</span></td><td class="ctr"><span class="verb update">U</span></td><td class="ctr"><span class="verb update">U</span></td></tr>
+  </tbody></table></div>
+  <h3>Records created, assigned, updated</h3>
+  <div id="chips" class="chips"></div>
+  <div id="stage-panel" class="stage-card"></div>
+  <h3>Record map across the file</h3>
+  <div class="overflow"><table id="stage-map"></table></div>
+</section>
+
+<section id="swarm">
+  <h2><span class="num">04</span> Agent Orchestration Model</h2>
+  <p class="lede">A supervisor reads <code>Process.currentStage</code> and dispatches only the workers allowed for that stage. An evaluator reconciles outputs into a package. The stage owner is the human gate. Workers write the canonical tables in Section 03 — they do not keep private copies.</p>
+  <div class="diagram-wrap">
+<svg viewBox="0 0 1040 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent orchestration">
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4C5866"/></marker></defs>
+  <style>
+    .n{fill:#F6F5F1;stroke:#0B1E33;stroke-width:1.2}
+    .sup{fill:#0B1E33;stroke:#0B1E33}
+    .t{font-family:'IBM Plex Sans',sans-serif;font-size:13px;fill:#1B2430}
+    .ts{font-family:'IBM Plex Sans',sans-serif;font-size:11px;fill:#4C5866}
+    .tw{font-family:'IBM Plex Sans',sans-serif;font-size:13px;fill:#F6F5F1}
+    .s2{font-family:'IBM Plex Sans',sans-serif;font-size:11px;fill:#C9A876}
+    .c{stroke:#4C5866;stroke-width:1.1;fill:none;marker-end:url(#arr)}
+  </style>
+  <rect class="sup" x="28" y="18" width="210" height="58" rx="3"/>
+  <text x="133" y="42" text-anchor="middle" class="tw">Process file</text>
+  <text x="133" y="60" text-anchor="middle" class="s2">processId · currentStage</text>
+  <line x1="133" y1="76" x2="133" y2="108" class="c"/>
+  <rect class="sup" x="28" y="108" width="210" height="72" rx="3"/>
+  <text x="133" y="134" text-anchor="middle" class="tw">Supervisor / planner</text>
+  <text x="133" y="152" text-anchor="middle" class="s2">decomposes the stage</text>
+  <text x="133" y="166" text-anchor="middle" class="s2">dispatches workers</text>
+  <line x1="238" y1="144" x2="278" y2="144" class="c"/>
+  <rect class="n" x="278" y="18" width="220" height="58" rx="3"/><text x="388" y="42" text-anchor="middle" class="t">CIP / identity</text><text x="388" y="58" text-anchor="middle" class="ts">Customer · Account · Address</text>
+  <rect class="n" x="278" y="86" width="220" height="58" rx="3"/><text x="388" y="110" text-anchor="middle" class="t">Facility keepers</text><text x="388" y="126" text-anchor="middle" class="ts">Business · Loan · participants</text>
+  <rect class="n" x="278" y="154" width="220" height="58" rx="3"/><text x="388" y="178" text-anchor="middle" class="t">Consumer credit</text><text x="388" y="194" text-anchor="middle" class="ts">FCRA pull · artefactId</text>
+  <rect class="n" x="278" y="222" width="220" height="58" rx="3"/><text x="388" y="246" text-anchor="middle" class="t">Commercial credit</text><text x="388" y="262" text-anchor="middle" class="ts">Experian Biz · SBFE · PAYDEX</text>
+  <rect class="n" x="518" y="18" width="220" height="58" rx="3"/><text x="628" y="42" text-anchor="middle" class="t">Sanctions / fraud</text><text x="628" y="58" text-anchor="middle" class="ts">OFAC SDN · fail-closed</text>
+  <rect class="n" x="518" y="86" width="220" height="58" rx="3"/><text x="628" y="110" text-anchor="middle" class="t">Spreading / KYB</text><text x="628" y="126" text-anchor="middle" class="ts">SbaProfile · spreads · debts</text>
+  <rect class="n" x="518" y="154" width="220" height="58" rx="3"/><text x="628" y="178" text-anchor="middle" class="t">Collateral</text><text x="628" y="194" text-anchor="middle" class="ts">Item · Pledge · insurance</text>
+  <rect class="n" x="518" y="222" width="220" height="58" rx="3"/><text x="628" y="246" text-anchor="middle" class="t">Policy · docs · funding</text><text x="628" y="262" text-anchor="middle" class="ts">Scorecard · E-Tran · ledger</text>
+  <path d="M278,47 L258,47 L258,144 L238,144" class="c"/>
+  <path d="M278,115 L258,115 L258,144 L238,144" class="c"/>
+  <line x1="278" y1="183" x2="238" y2="144" class="c"/>
+  <path d="M278,251 L258,251 L258,144 L238,144" class="c"/>
+  <path d="M518,47 L500,47 L500,144 L238,144" class="c"/>
+  <path d="M518,115 L500,115 L500,144 L238,144" class="c"/>
+  <path d="M518,183 L500,183 L500,144 L238,144" class="c"/>
+  <path d="M518,251 L500,251 L500,144 L238,144" class="c"/>
+  <line x1="738" y1="144" x2="778" y2="144" class="c"/>
+  <rect class="sup" x="778" y="70" width="230" height="148" rx="3"/>
+  <text x="893" y="100" text-anchor="middle" class="tw">Evaluator / critic</text>
+  <text x="893" y="122" text-anchor="middle" class="s2">grounding · artefactId</text>
+  <text x="893" y="138" text-anchor="middle" class="s2">policy conflicts</text>
+  <text x="893" y="154" text-anchor="middle" class="s2">confidence before package</text>
+  <text x="893" y="178" text-anchor="middle" class="s2">low-confidence → human</text>
+  <text x="893" y="194" text-anchor="middle" class="s2">never fills a gate</text>
+  <line x1="893" y1="218" x2="893" y2="250" class="c"/>
+  <rect class="n" x="778" y="250" width="230" height="70" rx="3"/>
+  <text x="893" y="278" text-anchor="middle" class="t">Stage package</text>
+  <text x="893" y="296" text-anchor="middle" class="ts">tables written · evidence trail</text>
+  <line x1="893" y1="320" x2="893" y2="352" class="c"/>
+  <rect class="sup" x="778" y="352" width="230" height="72" rx="3"/>
+  <text x="893" y="378" text-anchor="middle" class="tw">Human of record</text>
+  <text x="893" y="396" text-anchor="middle" class="s2">RM · Credit · Processor</text>
+  <text x="893" y="410" text-anchor="middle" class="s2">UW · Closer — stage owner</text>
+  <rect class="n" x="28" y="470" width="980" height="70" rx="3"/>
+  <text x="518" y="500" text-anchor="middle" class="t">Audit spine — AuditEvent under processId</text>
+  <text x="518" y="518" text-anchor="middle" class="ts">Every dispatch, tool call, confidence score, and human gate is appended. Replay is from this log, not chat.</text>
+</svg>
+<p class="cap">Fig. Orchestration — supervisor dispatches the current stage’s workers; evaluator packages; human gates.</p>
+</div>
+  <h3>Stage → agents → tables</h3>
+  <table><thead><tr><th>Stage</th><th>Agents</th><th>Creates</th><th>Updates</th><th>Human</th><th>Gate</th></tr></thead><tbody>
+<tr><td>01 Intake</td><td>CIP / identity, Facility keepers</td><td>Process, Customer, ApplicantAccount, Address, Business, Loan, ProcessTeam, ProcessParticipant</td><td>Process.currentStage</td><td>Elena Voss — RM</td><td>emailVerified + Business + Loan saved</td></tr>
+<tr><td>02 Pre-application</td><td>Consumer credit, Commercial credit, Sanctions / fraud</td><td>CreditPull (optional), SanctionsScreen (optional)</td><td>ProcessTeam, Process.currentStage</td><td>Marcus Hale — Credit · Priya Shah — Fraud</td><td>Any one pass: consumer credit, business credit, or fraud.</td></tr>
+<tr><td>03 Processing</td><td>Spreading / KYB</td><td>KybReport, SbaProfile (mockReport)</td><td>Loan, Business</td><td>Jordan Kim — Processor</td><td>Mock processing pack: KYB + SBA profile</td></tr>
+<tr><td>04 Collateral</td><td>Collateral</td><td>CollateralItem, CollateralPledge, InsurancePolicy</td><td>Loan.primaryCollateralId</td><td>Jordan Kim — Processor</td><td>Pledged item + insurance/lien review (mock UCC)</td></tr>
+<tr><td>05 Underwriter</td><td>Credit policy pack</td><td>ScorecardResult, Decision</td><td>Loan (rate, guarantyPercent, dates), Process.currentStage</td><td>Diana Okonkwo — Underwriter</td><td>Human Decision: approve → 06, pend → loop, reject → close</td></tr>
+<tr><td>06 Documents</td><td>Documentation</td><td>Document</td><td>Document.status, Loan.closingDate, InsurancePolicy</td><td>Sam Ruiz — Closer</td><td>Required package imaged (ACK) and reviewed</td></tr>
+<tr><td>07 Financing</td><td>Funding / E-Tran</td><td>GuarantySubmission, LedgerDraft</td><td>Loan.guarantyNumber / guarantyStatus / fundedOn</td><td>Sam Ruiz — Closer</td><td>Guaranty accepted + ledger draft ready</td></tr>
+<tr><td>08 Closure</td><td>Funding / E-Tran</td><td>LedgerPost, AuditSeal</td><td>Process.stageStatus = sealed, Loan servicing dates</td><td>Sam Ruiz — Closer</td><td>Dual-control post + seal. Origination writes stop.</td></tr>
+</tbody></table>
+  <h3>Dispatch sequence</h3>
+  <table><thead><tr><th>Step</th><th>Actor</th><th>Action</th></tr></thead><tbody>
+<tr><td>1</td><td>Elena Voss (RM)</td><td>Opens Process. CIP worker writes Customer, ApplicantAccount, Address, Business, then Loan.</td></tr>
+<tr><td>2</td><td>Supervisor</td><td>On RM advance, currentStage = 02. Assigns Marcus Hale (credit) and Priya Shah (fraud).</td></tr>
+<tr><td>3</td><td>Credit + Fraud workers</td><td>Consumer CreditPull, commercial CreditPull, and/or SanctionsScreen. Any one passing check qualifies the customer.</td></tr>
+<tr><td>4</td><td>Evaluator</td><td>Confirms a qualifying artefact exists. Does not require the other two checks. Packages the stage.</td></tr>
+<tr><td>5</td><td>Stage owner</td><td>Human gate. One pass advances currentStage. Incomplete loops. A failed check does not reject if another path still qualifies.</td></tr>
+<tr><td>6</td><td>Supervisor</td><td>Repeats 3–5 for stages 03–08 with the stage’s worker and desk (processor, UW, closer).</td></tr>
+</tbody></table>
+  <h3>Agent catalog</h3>
+  <table><thead><tr><th>Agent</th><th>Kind</th><th>Stage</th><th>Writes</th><th>Human seat</th></tr></thead><tbody>
+<tr><td>Supervisor / planner</td><td>supervisor</td><td>all</td><td>AuditEvent</td><td>—</td></tr>
+<tr><td>CIP / identity</td><td>worker</td><td>01</td><td>Customer, ApplicantAccount, Address, Business, Process</td><td>Elena Voss — RM</td></tr>
+<tr><td>Facility keepers</td><td>worker</td><td>01</td><td>Loan, ProcessParticipant, ProcessTeam</td><td>Elena Voss — RM</td></tr>
+<tr><td>Consumer credit</td><td>worker</td><td>02</td><td>CreditPull</td><td>Marcus Hale — Credit</td></tr>
+<tr><td>Commercial credit</td><td>worker</td><td>02</td><td>CreditPull</td><td>Marcus Hale — Credit</td></tr>
+<tr><td>Sanctions / fraud</td><td>worker</td><td>02</td><td>SanctionsScreen</td><td>Priya Shah — Fraud</td></tr>
+<tr><td>Spreading / KYB</td><td>worker</td><td>03</td><td>KybReport, SbaProfile, SpreadPeriod, DebtObligation, Loan</td><td>Jordan Kim — Processor</td></tr>
+<tr><td>Collateral</td><td>worker</td><td>04</td><td>CollateralItem, CollateralPledge, InsurancePolicy</td><td>Jordan Kim — Processor</td></tr>
+<tr><td>Credit policy pack</td><td>worker</td><td>05</td><td>ScorecardResult</td><td>Diana Okonkwo — Underwriter</td></tr>
+<tr><td>Documentation</td><td>worker</td><td>06</td><td>Document, Loan</td><td>Sam Ruiz — Closer</td></tr>
+<tr><td>Funding / E-Tran</td><td>worker</td><td>07–08</td><td>GuarantySubmission, LedgerDraft, LedgerPost, AuditSeal, Loan, Process</td><td>Sam Ruiz — Closer</td></tr>
+<tr><td>Evaluator / critic</td><td>evaluator</td><td>all</td><td>AuditEvent</td><td>Stage owner</td></tr>
+</tbody></table>
+  <h3>Tool allowlists</h3>
+  <table><thead><tr><th>Agent</th><th>Tools</th></tr></thead><tbody>
+<tr><td>Supervisor / planner</td><td>process.read, dispatch.worker, audit.append</td></tr>
+<tr><td>CIP / identity</td><td>cip.tokenizeTaxId, auth.signUpEmail, address.normalize</td></tr>
+<tr><td>Facility keepers</td><td>product.catalog, loan.draft</td></tr>
+<tr><td>Consumer credit</td><td>cra.equifax, cra.experian, cra.transunion</td></tr>
+<tr><td>Commercial credit</td><td>biz.experian, biz.sbfe, biz.dnb</td></tr>
+<tr><td>Sanctions / fraud</td><td>ofac.sdn</td></tr>
+<tr><td>Spreading / KYB</td><td>kyb.vendor, sba.sizeStandard, ocr.statements, spread.coa</td></tr>
+<tr><td>Collateral</td><td>collateral.ingest, lien.search, insurance.policy</td></tr>
+<tr><td>Credit policy pack</td><td>policy.scorecard, memo.draft</td></tr>
+<tr><td>Documentation</td><td>dms.receive, imaging.ack</td></tr>
+<tr><td>Funding / E-Tran</td><td>sba.etran, ledger.draft, ledger.post</td></tr>
+<tr><td>Evaluator / critic</td><td>eval.consistency, eval.grounding, audit.append</td></tr>
+</tbody></table>
+  <h3>Orchestration rules</h3>
+  <ul><li>Supervisor dispatches only workers allowed for Process.currentStage. A documentation worker cannot call E-Tran.</li><li>Each worker has a service identity and a tool allowlist. Tokens are short-lived and tagged with processId.</li><li>Workers write canonical tables — they do not keep private shadow copies of Customer, Business, or Loan.</li><li>Evaluator rejects ungrounded claims (no artefactId) and low-confidence extraction. It never fills a gate.</li><li>Pre-application qualifies the customer: any one passing check (consumer credit, business credit, or fraud history) advances the file. The swarm cannot infer a pass.</li><li>ScorecardResult is advisory. Decision is a human row (Diana Okonkwo). guarantyNumber is written only from E-Tran.</li><li>Every message, tool call, and confidence score appends AuditEvent under processId. That spine is the replay log.</li></ul>
+  <blockquote class="callout"><strong>Fail-closed —</strong> consumer credit, commercial credit, and OFAC must pass to leave Pre-application. The swarm cannot infer a pass, invent a guarantyNumber, or post the ledger. Dual-control posting is human.</blockquote>
+</section>
+
+<section id="data">
+  <h2><span class="num">05</span> Unstructured Data Cleansing & RAG</h2>
+  <p class="lede">Inputs are PDFs, tax returns, appraisals, and scans. Retrieval quality is bounded by cleansing before index.</p>
+  <ul>
+    <li><strong>Classify</strong> — tax return, statement, appraisal, insurance. Unreadable files quarantine.</li>
+    <li><strong>OCR</strong> — layout-aware tables; per-field confidence. Low confidence is flagged, not accepted.</li>
+    <li><strong>Normalize</strong> — common chart of accounts; reconcile units and conflicting figures.</li>
+    <li><strong>Chunk</strong> — by logical section, not character count. Metadata: processId, partyId, date, source.</li>
+    <li><strong>Index</strong> — entitlement tags from the source system. Re-index on amendment; versions retained.</li>
+  </ul>
+  <blockquote class="callout"><strong>Quality gate —</strong> nothing enters the RAG index below the extraction confidence threshold. Garbage grounding produces confidently wrong credit output.</blockquote>
+</section>
+
+<section id="mdm">
+  <h2><span class="num">06</span> Data Quality & Master Data Management</h2>
+  <p class="lede">Process is the parent of the origination file. Customer is the golden person. ApplicantAccount is the portal login bound to that email. Business is the golden org. Loan is facility terms on that process — 1:1, not the parent.</p>
+  <table><thead><tr><th>Domain</th><th>Golden record</th><th>Control</th></tr></thead><tbody>
+<tr><td>Customer (person)</td><td>Customer.customerId, taxIdToken, email</td><td>Merge on tax token. CIP plus email/phone required to open the file.</td></tr>
+<tr><td>Applicant login</td><td>ApplicantAccount.authUserId</td><td>Email confirmed, then password account. Business locked until emailVerified.</td></tr>
+<tr><td>Business (org)</td><td>Business.businessId, EIN token</td><td>SOS / KYB; sole prop is a person with optional org overlay.</td></tr>
+<tr><td>Process / file</td><td>Process.processId</td><td>Stage machine 01–08. Never a chat session key.</td></tr>
+<tr><td>Loan (facility)</td><td>Loan.loanId → processId</td><td>Keepers only: amount, rate, lookups, guaranty, dates.</td></tr>
+<tr><td>Credit artefacts</td><td>CreditPull.artefactId</td><td>One consumer + one commercial per process. No re-pull on retry.</td></tr>
+<tr><td>Spreads</td><td>SpreadPeriod</td><td>Confidence-scored; override logged.</td></tr>
+<tr><td>Collateral</td><td>CollateralItem + Pledge</td><td>Typed items pledged to this loan.</td></tr>
+</tbody></table>
+  <p>The swarm surfaces discrepancies between sources. It does not silently pick a winner.</p>
+</section>
+
+<section id="network">
+  <h2><span class="num">07</span> Zero-Trust Network Topology</h2>
+  <p class="lede">No component is trusted by location. Every call is authenticated, authorized, and logged.</p>
+  <table><thead><tr><th>Zone</th><th>Contains</th><th>Boundary</th></tr></thead><tbody>
+<tr><td>DMZ / edge</td><td>API gateway, WAF, SSO/MFA</td><td>Public ingress only</td></tr>
+<tr><td>Agent VPC</td><td>Supervisor, workers, policy gateway, secrets</td><td>mTLS, short-lived tokens</td></tr>
+<tr><td>Model VPC</td><td>Private LLM endpoint, vector store</td><td>PrivateLink — no public LLM egress</td></tr>
+<tr><td>Core banking</td><td>Ledger, DMS, warehouse</td><td>Brokered, never standing agent creds</td></tr>
+</tbody></table>
+  <ul>
+    <li>Per-agent service identity and least-privilege tool allowlist.</li>
+    <li>Egress allowlist on the agent VPC — blocks exfiltration via prompt injection.</li>
+    <li>VPC flow logs plus application audit retained per records policy.</li>
+  </ul>
+</section>
+
+<section id="tprm">
+  <h2><span class="num">08</span> Third-Party / LLM Vendor Risk</h2>
+  <p class="lede">Foundation-model and platform vendors sit in the bank TPRM programme with AI-specific diligence.</p>
+  <table><thead><tr><th>Control</th><th>Requirement</th></tr></thead><tbody>
+<tr><td>Data use</td><td>No training on bank prompts or credit files. Contractual and technical.</td></tr>
+<tr><td>Residency</td><td>Processing region named. Subprocessors listed.</td></tr>
+<tr><td>Exit</td><td>Weights/prompts/indexes exportable. 90-day cutover runbook.</td></tr>
+<tr><td>SOC / ISO</td><td>Current report on file before production traffic.</td></tr>
+</tbody></table>
+</section>
+
+<section id="dr">
+  <h2><span class="num">09</span> DR & Business Continuity</h2>
+  <p class="lede">Origination can degrade to human-only; the ledger cannot.</p>
+  <table><thead><tr><th>Capability</th><th>RTO</th><th>RPO</th></tr></thead><tbody>
+<tr><td>Agent platform</td><td>4 hours</td><td>15 minutes (audit spine)</td></tr>
+<tr><td>RAG / vector</td><td>8 hours (rebuild from DMS)</td><td>Last successful index</td></tr>
+<tr><td>Core ledger / E-Tran</td><td>Bank existing RTO</td><td>Bank existing RPO</td></tr>
+<tr><td>Human fallback</td><td>Immediate</td><td>n/a — workbenches stay up</td></tr>
+</tbody></table>
+  <blockquote class="callout">If the swarm is down, processors underwrite on the workbench. Funding and dual-control posting do not wait on an agent.</blockquote>
+</section>
+
+<section id="cyber">
+  <h2><span class="num">10</span> Cyber Incident Response — Agent Breach</h2>
+  <p class="lede">Treat a compromised worker as a privileged service account, not a chatbot.</p>
+  <ul>
+    <li>Kill switch: disable supervisor dispatch; freeze outbound tool calls.</li>
+    <li>Rotate the worker’s identity and revoke in-flight tokens.</li>
+    <li>Replay the audit spine for that processId; quarantine embeddings written after the event.</li>
+    <li>Notify per bank CSIRT. Credit files touched are in-scope for the incident.</li>
+  </ul>
+</section>
+
+<section id="hallucination">
+  <h2><span class="num">11</span> Hallucination or Model Degradation</h2>
+  <p class="lede">A wrong spread or invented guaranty number is an operational incident.</p>
+  <ul>
+    <li>Evaluator rejects ungrounded claims (no artefact id).</li>
+    <li><code>guarantyNumber</code> is written only from E-Tran — never inferred.</li>
+    <li>Drift monitors on extraction confidence and scorecard override rate.</li>
+    <li>Rollback to last signed prompt/model pair; human queue absorbs volume.</li>
+  </ul>
+</section>
+
+<section id="eol">
+  <h2><span class="num">12</span> Model Decommissioning</h2>
+  <p>Retire a model only after a dual-run against the successor, MRM sign-off, and archive of prompts, eval sets, and audit hashes. Indexes tagged to the old embedder are rebuilt, not mixed.</p>
+</section>
+
+<section id="rtbf">
+  <h2><span class="num">13</span> Right to be Forgotten</h2>
+  <p class="lede">Erasure walks Customer → ApplicantAccount → Address → pulls → embeddings tagged with that partyId. Sealed process rows remain as required audit if the bank must retain the file.</p>
+  <p>Raw SSN is never in prompts, lake feeds, or indexes — only taxIdToken and last four. Lake copies are in the cascade.</p>
+</section>
+
+<section id="crossborder">
+  <h2><span class="num">14</span> Cross-Border Data Transfer</h2>
+  <p>Credit files and CIP stay in the named residency region. Offshore L2 support sees tokenized workbenches only, under existing vendor contracts. No bulk extract of origination files to a non-approved region.</p>
+</section>
+
+<section id="green">
+  <h2><span class="num">15</span> Green AI / Sustainability</h2>
+  <p class="lede">Token and tool cost is a control. Prefer retrieval over re-generation; cache bureau artefacts; do not re-pull FICO on agent retry.</p>
+  <ul>
+    <li>Report kWh / process monthly (model + OCR + vector).</li>
+    <li>Cap max worker fan-out per process.</li>
+    <li>Archive cold embeddings rather than re-embed nightly.</li>
+  </ul>
+</section>
+
+<section id="sla">
+  <h2><span class="num">16</span> SLA Matrix</h2>
+  <table><thead><tr><th>Service</th><th>Target</th><th>Remedy</th></tr></thead><tbody>
+<tr><td>Intake → Pre-App package</td><td>4 business hours</td><td>Service credit; human queue</td></tr>
+<tr><td>Spread confidence ≥ threshold</td><td>95% of statements</td><td>Manual spread, no silent accept</td></tr>
+<tr><td>OFAC / bureau broker</td><td>Bank vendor SLA</td><td>Fail closed — do not invent a pass</td></tr>
+<tr><td>E-Tran submit (human-auth)</td><td>Same day if complete</td><td>Ops runbook, not agent retry storm</td></tr>
+<tr><td>Audit spine durability</td><td>RPO 15 min</td><td>Incident if gap</td></tr>
+</tbody></table>
+</section>
+
+<section id="lockin">
+  <h2><span class="num">17</span> Vendor Lock-in Mitigation</h2>
+  <p>Prompts, eval sets, and the canonical schema (Process, Customer, Business, Loan) are bank IP. Model and OCR vendors are interchangeable behind adapters. Lake events stay resource-oriented HTTP, not a vendor RPC.</p>
+</section>
+
+<section id="tco">
+  <h2><span class="num">18</span> Budget & TCO</h2>
+  <div class="grid-3">
+    <div class="card"><h4>Build</h4><p>Platform, adapters, workbenches, eval harness.</p></div>
+    <div class="card"><h4>Run</h4><p>Tokens, OCR, bureau, vector, observability, dual-control ops.</p></div>
+    <div class="card"><h4>Control</h4><p>MRM, TPRM, training, incident drills.</p></div>
+  </div>
+  <blockquote class="callout">Do not justify TCO on “hours saved” alone. Include fail-closed gates, dual-control posting, and human of record — those are the product.</blockquote>
+</section>
+
+<section id="ocm">
+  <h2><span class="num">19</span> Organizational Change Management</h2>
+  <p>RM, processor, underwriter, closer, and funding ops keep their seats. The swarm changes preparation time, not authority. Job aids map each workbench to a stage in Section 03.</p>
+</section>
+
+<section id="training">
+  <h2><span class="num">20</span> User Training & Adoption</h2>
+  <table><thead><tr><th>Audience</th><th>Focus</th></tr></thead><tbody>
+<tr><td>RM / intake</td><td>Customer + email verify + account, Business, Loan keepers</td></tr>
+<tr><td>Credit / fraud</td><td>Consumer CRA, commercial bureau, OFAC — fail-closed</td></tr>
+<tr><td>Processor</td><td>KYB, SBA profile, spreads, collateral, exception queues</td></tr>
+<tr><td>Underwriter</td><td>Package navigation, reason codes, Decision of record</td></tr>
+<tr><td>Closer / funding</td><td>Imaging ACK, E-Tran authorization, dual-control post</td></tr>
+</tbody></table>
+</section>
+
+<section id="prompts">
+  <h2><span class="num">21</span> Business-Level Prompt Catalog</h2>
+  <p>Named prompts per worker, versioned, evaluated. No free-form production prompt from an analyst. Catalog lives with the agent allowlist — a pricing worker cannot load the E-Tran prompt.</p>
+</section>
+
+<section id="kpi">
+  <h2><span class="num">22</span> Post-Deployment KPIs</h2>
+  <table><thead><tr><th>KPI</th><th>Intent</th></tr></thead><tbody>
+<tr><td>Cycle time 01→08</td><td>Compress preparation, not skip gates</td></tr>
+<tr><td>Email-verified files at Business</td><td>No Business row without ApplicantAccount</td></tr>
+<tr><td>Consumer + commercial pull coverage</td><td>100% of files that leave stage 02</td></tr>
+<tr><td>OFAC fail-closed rate</td><td>Must be 100% — no inferred pass</td></tr>
+<tr><td>Spread override rate</td><td>High = extraction problem, not hero processors</td></tr>
+<tr><td>Human Decision time</td><td>Package quality</td></tr>
+<tr><td>E-Tran accept on first submit</td><td>Data completeness</td></tr>
+<tr><td>Sealed files with dual-control</td><td>100% of funded</td></tr>
+</tbody></table>
+</section>
+
+<section id="roi">
+  <h2><span class="num">23</span> ROI & Value Realization</h2>
+  <p class="lede">Value is shorter cycle time and cleaner files, with the same (or tighter) credit and BSA posture. Do not count hours the underwriter still owes as “automated.”</p>
+  <p>Track benefits against a pre-swarm baseline per product (7(a) vs Express vs 504) after a monitored parallel-run, not at go-live day one.</p>
+</section>
+
+<section id="glossary">
+  <h2><span class="num">24</span> Glossary</h2>
+  <table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>CygnusX-1</td><td>This SBA origination programme.</td></tr>
+<tr><td>Process</td><td>Parent of one origination file (processId). Stage machine 01–08.</td></tr>
+<tr><td>Customer</td><td>Golden person. CIP, email, phone live here. Roles are not this record.</td></tr>
+<tr><td>ApplicantAccount</td><td>Borrower portal login bound to Customer.email. Required before Business.</td></tr>
+<tr><td>Business</td><td>Operating company. May be the primary borrower.</td></tr>
+<tr><td>Loan</td><td>Facility keepers on the process — 1:1. Not the parent.</td></tr>
+<tr><td>ProcessParticipant</td><td>Customer or Business hung on a process with roles[] (set).</td></tr>
+<tr><td>ProcessTeam</td><td>Bank seats on the file (RM, credit, fraud, processor, UW, closer).</td></tr>
+<tr><td>CreditPull</td><td>Consumer (FCRA) or commercial bureau artefact. No re-pull on retry.</td></tr>
+<tr><td>Supervisor</td><td>Orchestrator that dispatches stage workers. Does not write credit terms.</td></tr>
+<tr><td>Evaluator</td><td>Critic that checks grounding and confidence before the human package.</td></tr>
+<tr><td>Stage gate</td><td>Predicate to leave a stage. Incomplete work loops; fail can reject.</td></tr>
+<tr><td>Human of record</td><td>Underwriter whose Decision is the credit action.</td></tr>
+<tr><td>AuditEvent</td><td>Immutable spine row for every agent message and tool call.</td></tr>
+</tbody></table>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <span>CygnusX-1 — SBA Loan Origination Multi-Agent Swarm Blueprint · V1.4 · HTML review copy</span>
+    <span>Confidential — internal review · not legal or regulatory advice</span>
+  </div>
+</footer>
+
+<script>
+const STAGES = [{"id":"01","n":"01","name":"Initial Application","purpose":"Open the origination file. Identity and login first, then Business, then Loan keepers.","gate":"Customer email verified, ApplicantAccount bound, Business and Loan saved. Incomplete work loops here.","records":[{"verb":"create","record":"Process","detail":"Parent of the file. processId, processNumber (CX1-YYYY-nnnnn), currentStage = 01, stageStatus = open."},{"verb":"create","record":"Customer","detail":"Person: firstName, lastName, email, phone, ssnToken + ssnLast4, dob, gender, race, ethnicity. Role defaults to borrower."},{"verb":"create","record":"ApplicantAccount","detail":"Email confirmation (re-enter email + last four of phone) then password login. Sets Customer.emailVerified and authUserId. Business stays locked until this row exists."},{"verb":"create","record":"Address","detail":"Rows kind = primary and mailing, linked to the Customer (and later the Business)."},{"verb":"create","record":"Business","detail":"Operating company: legalName, taxIdToken, businessType, incorporatedOn, naicsCode, primary address, requested amount and purpose."},{"verb":"create","record":"Loan","detail":"1:1 facility on this Process. productId, loanAmount, rate, basis, index, spread, IO, status, dates, collateral/client/borrower/business/guarantor/coborrower lookups."},{"verb":"assign","record":"ProcessTeam","detail":"Elena Voss (RM) assigned at intake. Other desks remain unassigned."},{"verb":"assign","record":"ProcessParticipant","detail":"Business is typically primary borrower; Customer is guarantor (roles is a set). borrowerRef on Loan may switch to Customer."},{"verb":"gate","record":"Process","detail":"RM moves the file to Pre-application only after Customer, verified login, Business, and Loan are saved."}]},{"id":"02","n":"02","name":"Pre-Application","purpose":"Qualify the customer to continue. Consumer CRA, commercial bureau, and OFAC are independent checks — any one pass is enough.","gate":"Any one passing check (consumer credit, business credit, or fraud history) advances. Incomplete loops here. A failed check does not reject the file if another path still qualifies.","records":[{"verb":"assign","record":"ProcessTeam","detail":"Marcus Hale (credit) and Priya Shah (fraud) assigned at preApplication."},{"verb":"create","record":"CreditPull (consumer)","detail":"Optional. partyKind = customer. Equifax / Experian / TransUnion. Stores scoreType, lastCheckedAt, yearsSinceFirstCredit, outstandingAmount. FCRA purpose = this processId. No re-pull on retry. A pass qualifies the customer on its own."},{"verb":"create","record":"CreditPull (commercial)","detail":"Optional. partyKind = business. Experian Business, Equifax SBFE, or D&B PAYDEX. Same score snapshot fields. Not SBSS (sunset 1 Mar 2026). A pass qualifies the customer on its own."},{"verb":"create","record":"SanctionsScreen","detail":"Optional. OFAC / SDN on each participant. A pass qualifies the customer on its own. A hit does not reject the file — they can still qualify on a bureau pull."},{"verb":"gate","record":"Process","detail":"Any one passing CreditPull or SanctionsScreen → currentStage = 03. Nothing run, or all run and none passed → loop here."}]},{"id":"03","n":"03","name":"Processing","purpose":"Mock vendor pack: KYB, SBA size/eligibility, SAM, franchise. Report stored on SbaProfile.","gate":"KybReport + SbaProfile (mock pack). Incomplete loops here.","records":[{"verb":"assign","record":"ProcessTeam","detail":"Jordan Kim (processor) assigned at processing."},{"verb":"create","record":"KybReport","detail":"Vendor-agnostic KYB on the Business. Source stored on the row."},{"verb":"create","record":"SbaProfile","detail":"Size standard, NAICS eligibility, franchise, SAM. mockReport JSON holds the customer processing pack until live APIs land."},{"verb":"create","record":"SpreadPeriod","detail":"Period headers and line items, confidence score. Override is logged, not silent."},{"verb":"create","record":"DebtObligation","detail":"Business and personal liabilities used in global cash flow."},{"verb":"update","record":"Loan","detail":"Working terms refined from spreading — loanAmount, purposeId."}]},{"id":"04","n":"04","name":"Collateral","purpose":"Typed collateral, lien position, location, insurance. Mock UCC-1 on the worker.","gate":"At least one validated CollateralItem + Pledge, or a documented exception.","records":[{"verb":"create","record":"CollateralItem","detail":"kind = realEstate | vehicle | equipment | ag | general | liquid. Payload per type."},{"verb":"create","record":"CollateralPledge","detail":"Links the item to this process’s Loan. Lien position, pledgeValue."},{"verb":"create","record":"InsurancePolicy","detail":"Required coverage on pledged items or the company."},{"verb":"update","record":"Loan","detail":"primaryCollateralId set from the pledge."}]},{"id":"05","n":"05","name":"Underwriter","purpose":"Human of record. Scorecard recommends; it does not decide.","gate":"Approve → stage 06. Pend → loop in 05. Reject → process closed.","records":[{"verb":"assign","record":"ProcessTeam","detail":"Diana Okonkwo (underwriter) assigned."},{"verb":"create","record":"ScorecardResult","detail":"Policy engine output. Child of the forthcoming Decision — never a substitute."},{"verb":"create","record":"Decision","detail":"Human approve / pend / reject, actor, riskGrade, conditions."},{"verb":"update","record":"Loan","detail":"On approve: interestRate, guarantyPercent, closingDate, installment fields."},{"verb":"gate","record":"Process","detail":"Reject → stageStatus = rejected. Approve → currentStage = 06."}]},{"id":"06","n":"06","name":"Document Processing","purpose":"Closing package. A document is not filed without imaging ACK.","gate":"Required package imaged and reviewed. Incomplete docs loop here.","records":[{"verb":"assign","record":"ProcessTeam","detail":"Sam Ruiz (closer) assigned."},{"verb":"create","record":"Document","detail":"Checklist items (note, guaranty, corporate docs, insurance). Status = received | imaged | filed."},{"verb":"update","record":"Document","detail":"Imaging ACK required before filed = true. Retention class set."},{"verb":"update","record":"Loan","detail":"closingDate when package is complete and executed."}]},{"id":"07","n":"07","name":"Financing","purpose":"SBA guaranty and bank funding. Human-authorized E-Tran only.","gate":"Guaranty accepted and ledger draft ready. Incomplete funding loops here.","records":[{"verb":"create","record":"GuarantySubmission","detail":"E-Tran payload. Human-authorized. Sets guarantyNumber only from the agency response."},{"verb":"update","record":"Loan","detail":"guarantyNumber, guarantyStatus, guarantyAmount, fundedOn."},{"verb":"create","record":"LedgerDraft","detail":"Core booking draft. Dual-control — not a post."}]},{"id":"08","n":"08","name":"Closure","purpose":"Final ledger post. Origination writes end. Loan available to the customer.","gate":"Dual-control post and seal. Incomplete closure loops here.","records":[{"verb":"create","record":"LedgerPost","detail":"Dual-control post of the draft. Core refs stored. Draft is never replayed."},{"verb":"create","record":"AuditSeal","detail":"Package locator for the sealed file."},{"verb":"update","record":"Process","detail":"stageStatus = sealed. Origination writes stop. Servicing owns the facility thereafter."},{"verb":"update","record":"Loan","detail":"Facility is available to the Customer. firstPrinPaymentDate and maturesOn are live servicing dates."}]}];
+const verbClass = {create:"create", assign:"assign", update:"update", gate:"gate"};
+function render(i){
+  const s = STAGES[i];
+  document.querySelectorAll(".chip").forEach((c,n)=>c.classList.toggle("on", n===i));
+  const recs = s.records.map(r =>
+    `<div class="rec"><div class="rec-h"><span class="verb ${verbClass[r.verb]}">${r.verb}</span><strong>${r.record}</strong></div><p style="margin:0;color:var(--ink-soft);font-size:.9rem;">${r.detail}</p></div>`
+  ).join("");
+  document.getElementById("stage-panel").innerHTML =
+    `<p style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin:0 0 .4rem;">Stage ${s.n} of 08</p>
+     <h3 style="margin-top:0;">${s.name}</h3>
+     <p class="lede">${s.purpose}</p>
+     <div class="gatebox"><strong>Gate — </strong>${s.gate}</div>
+     <h4 style="margin-top:0;">Records</h4>${recs}`;
+}
+function map(){
+  const rows = STAGES.map((s,i)=>{
+    const creates = s.records.filter(r=>r.verb==="create").map(r=>r.record).join(", ") || "—";
+    const rest = s.records.filter(r=>r.verb!=="create").map(r=>r.record).join(", ") || "—";
+    return `<tr><td><a href="#stageflow" data-i="${i}">${s.n} ${s.name}</a></td><td>${creates}</td><td>${rest}</td></tr>`;
+  }).join("");
+  document.getElementById("stage-map").innerHTML =
+    `<thead><tr><th>Stage</th><th>Creates</th><th>Assigns / updates</th></tr></thead><tbody>${rows}</tbody>`;
+  document.getElementById("stage-map").addEventListener("click", e=>{
+    const a = e.target.closest("a[data-i]");
+    if(a){ e.preventDefault(); render(+a.dataset.i); }
+  });
+}
+document.getElementById("chips").innerHTML = STAGES.map((s,i)=>
+  `<button type="button" class="chip${i===0?" on":""}" data-i="${i}"><span class="n">${s.n}</span>${s.name}</button>`
+).join("");
+document.getElementById("chips").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-i]");
+  if(b) render(+b.dataset.i);
+});
+map();
+render(0);
+
+const SB_CORE = ["Deal Approval","Deal","LOS Product","Account","Metric","Related Party Metric","Collateral Pledged","Asset","Deal Team Member","Requirements","Related Party"];
+const SB_RELS = [{"from":"Deal","to":"Account","field":"accountId","kind":"masterDetail","cardinality":"1:N"},{"from":"LOS Product","to":"Deal","field":"dealId","kind":"lookup","cardinality":"1:N"},{"from":"LOS Product","to":"Account","field":"accountId","kind":"lookup","cardinality":"1:N"},{"from":"Related Party","to":"LOS Product","field":"losProductId","kind":"lookup","cardinality":"1:N"},{"from":"Related Party","to":"Account","field":"accountId","kind":"lookup","cardinality":"1:N"},{"from":"Deal Approval","to":"LOS Product","field":"losProductId","kind":"lookup","cardinality":"1:N"},{"from":"Deal Approval","to":"Deal","field":"dealId","kind":"lookup","cardinality":"1:N"},{"from":"Requirements","to":"LOS Product","field":"losProductId","kind":"lookup","cardinality":"1:N"},{"from":"Requirements","to":"Related Party","field":"relatedPartyId","kind":"lookup","cardinality":"1:N"},{"from":"Requirements","to":"Collateral Pledged","field":"pledgeId","kind":"lookup","cardinality":"1:N"},{"from":"Requirements","to":"Account","field":"accountId","kind":"lookup","cardinality":"1:N"},{"from":"Metric","to":"LOS Product","field":"losProductId","kind":"lookup","cardinality":"1:N"},{"from":"Metric","to":"Account","field":"accountId","kind":"lookup","cardinality":"1:N"},{"from":"Related Party Metric","to":"Related Party","field":"relatedPartyId","kind":"lookup","cardinality":"1:N"},{"from":"Related Party Metric","to":"LOS Product","field":"losProductId","kind":"lookup","cardinality":"1:N"},{"from":"Related Party Metric","to":"Account","field":"accountId","kind":"lookup","cardinality":"1:N"},{"from":"Collateral Pledged","to":"LOS Product","field":"losProductId","kind":"lookup","cardinality":"1:N"},{"from":"Collateral Pledged","to":"Asset","field":"assetId","kind":"lookup","cardinality":"1:N"},{"from":"Collateral Pledged","to":"Account","field":"accountId","kind":"lookup","cardinality":"1:N"},{"from":"Asset","to":"Account","field":"accountId","kind":"lookup","cardinality":"1:N"},{"from":"Deal Team Member","to":"Deal","field":"dealId","kind":"lookup","cardinality":"1:N"}];
+const SB_LAYOUT = {"Deal Approval":{"x":20,"y":28},"Deal":{"x":400,"y":8},"LOS Product":{"x":210,"y":340},"Account":{"x":700,"y":180},"Metric":{"x":1060,"y":36},"Related Party Metric":{"x":1400,"y":16},"Collateral Pledged":{"x":20,"y":760},"Asset":{"x":250,"y":1080},"Deal Team Member":{"x":540,"y":1100},"Requirements":{"x":760,"y":780},"Related Party":{"x":1140,"y":700}};
+const SB_CANVAS = {"w":1720,"h":1460};
+const SB_FIELDS = {"Deal Approval":10,"Deal":9,"LOS Product":15,"Account":14,"Metric":8,"Related Party Metric":12,"Collateral Pledged":9,"Asset":9,"Deal Team Member":7,"Requirements":10,"Related Party":9};
+const sbVisible = new Set(SB_CORE);
+let sbSelected = null;
+let sbZoom = 0.88;
+function sbRelated(name){
+  const next = new Set([name]);
+  SB_RELS.forEach(r => { if(r.from===name || r.to===name){ next.add(r.from); next.add(r.to); } });
+  return next;
+}
+function sbApply(){
+  const rel = sbSelected ? sbRelated(sbSelected) : null;
+  document.querySelectorAll(".sb-card").forEach(el => {
+    const name = el.dataset.obj;
+    const on = sbVisible.has(name);
+    el.classList.toggle("off", !on);
+    el.classList.toggle("on", sbSelected === name);
+    el.classList.toggle("dim", Boolean(rel) && on && !rel.has(name));
+  });
+  document.querySelectorAll(".sb-line").forEach(el => {
+    const show = sbVisible.has(el.dataset.from) && sbVisible.has(el.dataset.to);
+    el.classList.toggle("off", !show);
+    el.classList.toggle("dim", show && Boolean(rel) && !(rel.has(el.dataset.from) && rel.has(el.dataset.to)));
+  });
+  document.querySelectorAll(".sb-pal-item input").forEach(inp => {
+    inp.checked = sbVisible.has(inp.dataset.obj);
+    inp.closest(".sb-pal-item").classList.toggle("sel", sbSelected === inp.dataset.obj);
+  });
+  const lineN = [...document.querySelectorAll(".sb-line")].filter(el => !el.classList.contains("off")).length;
+  document.getElementById("sb-meta").textContent = sbVisible.size + " objects · " + lineN + " relationships";
+  document.getElementById("sb-related").disabled = !sbSelected;
+  const foot = document.getElementById("sb-pal-foot");
+  if(!sbSelected){
+    foot.textContent = "Click an object to highlight its lookups and master-details.";
+  } else {
+    const rs = SB_RELS.filter(r => r.from===sbSelected || r.to===sbSelected);
+    foot.innerHTML = "<strong>"+sbSelected+"</strong><br>"+(SB_FIELDS[sbSelected]||0)+" fields · "+rs.length+" relationships<br>"+
+      rs.slice(0,6).map(r => r.field+" · "+r.from+" → "+r.to+" · "+(r.kind==="masterDetail"?"MD":"Lookup")+" "+r.cardinality).join("<br>");
+  }
+  sbFitSizer();
+}
+function sbFitSizer(){
+  const vp = document.getElementById("sb-viewport");
+  const sizer = document.getElementById("sb-sizer");
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  document.querySelectorAll(".sb-card:not(.off)").forEach(el => {
+    const p = SB_LAYOUT[el.dataset.obj];
+    if(!p) return;
+    minX=Math.min(minX,p.x); minY=Math.min(minY,p.y);
+    maxX=Math.max(maxX,p.x+248); maxY=Math.max(maxY,p.y+260);
+  });
+  if(!isFinite(minX)){ minX=0; minY=0; maxX=SB_CANVAS.w; maxY=SB_CANVAS.h; }
+  const pad = 48;
+  sizer.style.width = Math.max(vp.clientWidth, (SB_CANVAS.w) * sbZoom) + "px";
+  sizer.style.height = Math.max(vp.clientHeight, (maxY + pad) * sbZoom) + "px";
+  vp.style.setProperty("--sb-z", sbZoom);
+}
+function sbSetVisible(names){
+  sbVisible.clear();
+  names.forEach(n => sbVisible.add(n));
+  sbApply();
+}
+document.getElementById("sb-core").addEventListener("click", () => { sbSelected=null; sbSetVisible(SB_CORE); sbFit(); });
+document.getElementById("sb-all").addEventListener("click", () => { sbSelected=null; sbSetVisible(Object.keys(SB_LAYOUT)); sbFit(); });
+document.getElementById("sb-related").addEventListener("click", () => { if(sbSelected) { sbSetVisible([...sbRelated(sbSelected)]); sbFit(); } });
+document.getElementById("sb-pal-list").addEventListener("change", e => {
+  const inp = e.target.closest("input[data-obj]");
+  if(!inp) return;
+  if(inp.checked) sbVisible.add(inp.dataset.obj); else { sbVisible.delete(inp.dataset.obj); if(sbSelected===inp.dataset.obj) sbSelected=null; }
+  sbApply();
+});
+document.getElementById("sb-canvas").addEventListener("click", e => {
+  const card = e.target.closest(".sb-card");
+  const btn = e.target.closest("[data-expand]");
+  if(btn){
+    e.stopPropagation();
+    const cardEl = btn.closest(".sb-card");
+    const open = cardEl.classList.toggle("open");
+    const extra = (SB_FIELDS[btn.dataset.expand]||0) - 10;
+    btn.textContent = open ? "Show fewer fields" : "+ " + extra + " more fields";
+    return;
+  }
+  sbSelected = card ? card.dataset.obj : null;
+  sbApply();
+});
+document.getElementById("sb-find").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll(".sb-pal-item").forEach(lab => {
+    const name = lab.querySelector("input").dataset.obj.toLowerCase();
+    lab.style.display = !q || name.includes(q) ? "" : "none";
+  });
+});
+document.getElementById("sb-zoom-in").addEventListener("click", () => { sbZoom = Math.min(1.5, sbZoom + 0.1); sbFitSizer(); });
+document.getElementById("sb-zoom-out").addEventListener("click", () => { sbZoom = Math.max(0.35, sbZoom - 0.1); sbFitSizer(); });
+function sbFit(){
+  const vp = document.getElementById("sb-viewport");
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  document.querySelectorAll(".sb-card:not(.off)").forEach(el => {
+    const p = SB_LAYOUT[el.dataset.obj];
+    if(!p) return;
+    minX=Math.min(minX,p.x); minY=Math.min(minY,p.y);
+    maxX=Math.max(maxX,p.x+248); maxY=Math.max(maxY,p.y+260);
+  });
+  if(!isFinite(minX)) return;
+  const pad=48, bw=maxX-minX+pad*2, bh=maxY-minY+pad*2;
+  const byW = vp.clientWidth / bw;
+  const byH = vp.clientHeight / bh;
+  const mobile = vp.clientWidth < 640;
+  const many = sbVisible.size > 10;
+  if (mobile) sbZoom = Math.min(1, Math.max(0.32, Math.min(byW, byH)));
+  else if (many) sbZoom = Math.min(0.72, Math.max(0.4, Math.min(byW, byH)));
+  else sbZoom = Math.min(0.92, Math.max(0.82, byW));
+  sbFitSizer();
+  vp.scrollLeft = Math.max(0, (minX-pad)*sbZoom);
+  vp.scrollTop = Math.max(0, (minY-pad)*sbZoom);
+}
+document.getElementById("sb-fit").addEventListener("click", sbFit);
+sbApply();
+requestAnimationFrame(sbFit);
+</script>
+</body>
+</html>

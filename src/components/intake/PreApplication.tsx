@@ -9,6 +9,30 @@ import { staffById } from "@/lib/intake/stages";
 import { useOrigination, type CreditPull, type ScreenCheck } from "@/lib/intake/store";
 import { Field, Select } from "./fields";
 
+function isCreditPull(pull: CreditPull | ScreenCheck): pull is CreditPull {
+  return "productCode" in pull && "score" in pull;
+}
+
+function money(n: number | null | undefined) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
+function asDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+}
+
+function Fact({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="font-mono text-[0.65rem] tracking-[0.12em] uppercase opacity-70 mb-0.5">{k}</p>
+      <p className="text-sm mb-0 font-medium tabular-nums">{v}</p>
+    </div>
+  );
+}
+
 function Result({
   pull,
   scoreLabel,
@@ -19,12 +43,11 @@ function Result({
   if (!pull) {
     return (
       <p className="text-sm text-ink-faint mb-4">
-        Not run. Fail-closed — missing artefact is not a pass. Retry reuses the same artefact.
+        Not run. Optional — any one passing check qualifies the customer to continue.
       </p>
     );
   }
-  const score = "score" in pull ? pull.score : undefined;
-  const artefact = "artefactId" in pull ? pull.artefactId : undefined;
+  const credit = isCreditPull(pull) ? pull : null;
   return (
     <div
       className={`rounded-md px-4 py-3 text-sm mb-4 ${
@@ -33,10 +56,24 @@ function Result({
     >
       <p className="font-medium mb-1">
         {pull.outcome === "pass" ? "Pass" : "Fail"}
-        {score != null ? ` · ${scoreLabel ?? "Score"} ${score}` : ""}
+        {credit ? ` · ${credit.scoreType || scoreLabel || "Score"} ${credit.score}` : ""}
       </p>
       <p className="mb-0">{pull.summary}</p>
-      {artefact ? <p className="mt-2 mb-0 font-mono text-xs opacity-80">artefactId {artefact.slice(0, 12)}…</p> : null}
+      {credit ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+          <Fact k="Type" v={credit.scoreType || scoreLabel || credit.productCode || "—"} />
+          <Fact k="Score" v={credit.score != null ? String(credit.score) : "—"} />
+          <Fact k="Last checked" v={asDate(credit.lastCheckedAt || credit.ranAt)} />
+          <Fact k="Years since first credit" v={credit.yearsSinceFirstCredit != null ? String(credit.yearsSinceFirstCredit) : "—"} />
+          <Fact k="Outstanding" v={money(credit.outstandingAmount)} />
+          <Fact k="Utilization" v={credit.utilizationPct != null ? `${credit.utilizationPct}%` : "—"} />
+          <Fact k="Open tradelines" v={credit.openTradelines != null ? String(credit.openTradelines) : "—"} />
+          <Fact k="Past due" v={money(credit.pastDueAmount)} />
+        </div>
+      ) : null}
+      {"artefactId" in pull && pull.artefactId ? (
+        <p className="mt-2 mb-0 font-mono text-xs opacity-80">artefactId {pull.artefactId.slice(0, 12)}…</p>
+      ) : null}
       <p className="mt-1 mb-0 text-xs opacity-80">
         {pull.actor} · {new Date(pull.ranAt).toLocaleString()}
         {"provider" in pull && pull.provider ? ` · ${pull.provider}` : ""}
@@ -86,16 +123,20 @@ export function PreApplication() {
     }
   }
 
-  const ready =
-    consumerPull?.outcome === "pass" &&
-    businessPull?.outcome === "pass" &&
-    fraudCheck?.outcome === "pass";
+  const qualifiedOn = [
+    consumerPull?.outcome === "pass" ? "consumer credit" : null,
+    businessPull?.outcome === "pass" ? "business credit" : null,
+    fraudCheck?.outcome === "pass" ? "fraud history" : null,
+  ].filter(Boolean) as string[];
+  const ready = qualifiedOn.length > 0;
 
   return (
     <div className="grid gap-4">
       <p className="text-sm text-ink-soft rounded-md border border-line bg-white px-4 py-3">
-        Split bureau pulls via the LangChain swarm. Consumer CRA is FCRA. Business credit is a
-        commercial report. SBSS is not the SBA gate. Fail-closed.
+        Pre-application qualifies the customer to continue the loan. Any one passing check —
+        consumer credit, business credit, or fraud history — is enough to move to Processing.
+        The other checks stay optional. Bureau pulls store type, score, last checked, years
+        since first credit, and outstanding.
         {llm ? ` Model: ${llm.label}.` : ""}
       </p>
       {error ? <p className="text-sm text-bad mb-0">{error}</p> : null}
@@ -208,7 +249,7 @@ export function PreApplication() {
       {ready ? (
         <div className="rounded-lg bg-white border border-line p-5 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-good mb-0">
-            Consumer, business, and fraud gates passed. Processor can open the file.
+            Qualified on {qualifiedOn.join(" · ")}. Processor can open the file.
           </p>
           <button
             type="button"

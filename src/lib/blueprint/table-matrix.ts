@@ -9,6 +9,7 @@ export const MATRIX_STAGES = [
   { id: "08", label: "Closure" },
 ] as const;
 
+/** C create · U update · A assign · G gate. Empty = not touched this stage. */
 export type CellVerb = "C" | "U" | "A" | "G" | "C/U" | "C/G" | "U/G" | "A/G";
 
 export type MatrixRow = {
@@ -17,31 +18,17 @@ export type MatrixRow = {
 };
 
 export const TABLE_MATRIX: MatrixRow[] = [
-  { table: "Process", cells: ["C", "G", "U", "U", "G", "U", "U", "U/G"] },
-  { table: "ProcessTeam", cells: ["C", "A", "A", "", "A", "A", "", ""] },
-  { table: "Customer", cells: ["C", "", "", "", "", "", "", ""] },
-  { table: "ApplicantAccount", cells: ["C/G", "", "", "", "", "", "", ""] },
-  { table: "Address", cells: ["C", "", "", "", "", "", "", ""] },
-  { table: "Business", cells: ["C", "", "U", "", "", "", "", ""] },
-  { table: "ProcessParticipant", cells: ["C", "A", "U", "", "", "", "", ""] },
-  { table: "Loan", cells: ["C", "U", "U", "U", "U", "U", "U", "U"] },
-  { table: "CreditPull", cells: ["", "C/G", "", "", "", "", "", ""] },
-  { table: "SanctionsScreen", cells: ["", "C/G", "", "", "", "", "", ""] },
-  { table: "KybReport", cells: ["", "", "C", "", "", "", "", ""] },
-  { table: "SbaProfile", cells: ["", "", "C", "", "", "", "", ""] },
-  { table: "SpreadPeriod", cells: ["", "", "C/U", "", "", "", "", ""] },
-  { table: "DebtObligation", cells: ["", "", "C", "", "", "", "", ""] },
-  { table: "CollateralItem", cells: ["", "", "", "C", "", "", "", ""] },
-  { table: "CollateralPledge", cells: ["", "", "", "C", "", "", "", ""] },
-  { table: "InsurancePolicy", cells: ["", "", "", "C", "", "U", "", ""] },
-  { table: "ScorecardResult", cells: ["", "", "", "", "C", "", "", ""] },
-  { table: "Decision", cells: ["", "", "", "", "C/G", "", "", ""] },
-  { table: "Document", cells: ["", "", "", "", "", "C/U", "", ""] },
-  { table: "GuarantySubmission", cells: ["", "", "", "", "", "", "C", ""] },
-  { table: "LedgerDraft", cells: ["", "", "", "", "", "", "C", ""] },
-  { table: "LedgerPost", cells: ["", "", "", "", "", "", "", "C"] },
-  { table: "AuditSeal", cells: ["", "", "", "", "", "", "", "C"] },
-  { table: "AuditEvent", cells: ["C", "C", "C", "C", "C", "C", "C", "C"] },
+  { table: "Account", cells: ["C", "", "U", "", "", "", "", ""] },
+  { table: "Deal", cells: ["C", "G", "U", "U", "G", "U", "U", "U/G"] },
+  { table: "LOS Product", cells: ["C", "U", "U", "U", "U", "U", "U", "U"] },
+  { table: "Related Party", cells: ["C", "A", "U", "", "", "", "", ""] },
+  { table: "Deal Team Member", cells: ["C", "A", "A", "", "A", "A", "", ""] },
+  { table: "Related Party Metric", cells: ["", "C/G", "", "", "", "", "", ""] },
+  { table: "Metric", cells: ["", "", "C", "U", "U", "", "", ""] },
+  { table: "Asset", cells: ["", "", "", "C", "", "", "", ""] },
+  { table: "Collateral Pledged", cells: ["", "", "", "C", "", "", "", ""] },
+  { table: "Deal Approval", cells: ["", "", "", "", "C/G", "", "", ""] },
+  { table: "Requirements", cells: ["", "", "C", "C", "U", "C/U", "U", "U"] },
 ];
 
 export const MATRIX_LEGEND: { code: CellVerb; label: string }[] = [

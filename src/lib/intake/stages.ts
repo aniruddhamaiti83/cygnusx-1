@@ -5,7 +5,7 @@ export const PROCESS_STAGES = [
   { id: "collateral", n: "04", label: "Collateral", owner: "Processor" },
   { id: "underwriter", n: "05", label: "Underwriter", owner: "Underwriter" },
   { id: "documents", n: "06", label: "Documents", owner: "Closer" },
-  { id: "financing", n: "07", label: "Financing", owner: "Funding ops" },
+  { id: "financing", n: "07", label: "Funding", owner: "Funding ops" },
   { id: "closure", n: "08", label: "Closure", owner: "Funding ops" },
 ] as const;
 

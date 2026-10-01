@@ -107,11 +107,19 @@ export function AccountSetup() {
       </div>
 
       <ol className="grid grid-cols-2 gap-2">
-        <li className={`rounded-md border px-3 py-2.5 text-sm ${phase === "verify" ? "border-navy bg-navy text-paper" : "border-line bg-good-wash text-good"}`}>
+        <li
+          className={`rounded-md border px-3 py-2.5 text-sm ${
+            phase === "verify" ? "border-navy bg-navy text-paper" : "border-line bg-good-wash text-good"
+          }`}
+        >
           <span className="font-mono text-[0.65rem] opacity-70 mr-1.5">1</span>
           {phase === "setup" ? "Email verified" : "Verify email"}
         </li>
-        <li className={`rounded-md border px-3 py-2.5 text-sm ${phase === "setup" ? "border-navy bg-navy text-paper" : "border-line bg-paper text-ink-faint"}`}>
+        <li
+          className={`rounded-md border px-3 py-2.5 text-sm ${
+            phase === "setup" ? "border-navy bg-navy text-paper" : "border-line bg-paper text-ink-faint"
+          }`}
+        >
           <span className="font-mono text-[0.65rem] opacity-70 mr-1.5">2</span>
           Create login
         </li>
@@ -121,17 +129,45 @@ export function AccountSetup() {
         <div className="h-40 rounded-md bg-paper animate-pulse" />
       ) : phase === "verify" ? (
         <form onSubmit={submitVerify} className="grid gap-5" noValidate>
-          <Field label="Confirm email" required error={errors.confirmEmail} hint="Re-type the address from the Customer record.">
-            <TextInput type="email" autoComplete="email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} />
+          <Field
+            label="Confirm email"
+            required
+            error={errors.confirmEmail}
+            hint="Re-type the address from the Customer record."
+          >
+            <TextInput
+              type="email"
+              autoComplete="email"
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+            />
           </Field>
-          <Field label="Last four of phone" required error={errors.phoneLast4} hint="The last four digits of the phone on the Customer record.">
-            <TextInput inputMode="numeric" autoComplete="off" maxLength={4} value={phoneLast4} onChange={(e) => setPhoneLast4(digitsOnly(e.target.value).slice(0, 4))} />
+          <Field
+            label="Last four of phone"
+            required
+            error={errors.phoneLast4}
+            hint="The last four digits of the phone on the Customer record."
+          >
+            <TextInput
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={4}
+              value={phoneLast4}
+              onChange={(e) => setPhoneLast4(digitsOnly(e.target.value).slice(0, 4))}
+            />
           </Field>
           <div className="flex flex-wrap justify-between gap-3">
-            <button type="button" onClick={() => setStep("customer")} className="h-12 px-5 rounded-md border border-line bg-white font-medium hover:border-accent">
+            <button
+              type="button"
+              onClick={() => setStep("customer")}
+              className="h-12 px-5 rounded-md border border-line bg-white font-medium hover:border-accent"
+            >
               Back to customer
             </button>
-            <button type="submit" className="h-12 px-6 rounded-md bg-navy text-paper font-medium hover:bg-navy-2">
+            <button
+              type="submit"
+              className="h-12 px-6 rounded-md bg-navy text-paper font-medium hover:bg-navy-2"
+            >
               Verify email
             </button>
           </div>
@@ -140,7 +176,8 @@ export function AccountSetup() {
         <form onSubmit={submitSetup} className="grid gap-5" noValidate>
           {sessionIsApplicant && !isPending ? (
             <p className="text-sm text-ink-soft rounded-md border border-line px-4 py-3 mb-0">
-              Signed in as {user?.primaryEmail}. That matches this Customer. Continue to attach the file to your login.
+              Signed in as {user?.primaryEmail}. That matches this Customer. Continue to attach
+              the file to your login.
             </p>
           ) : (
             <>
@@ -150,30 +187,68 @@ export function AccountSetup() {
                 </p>
               ) : null}
               <div className="flex gap-2 text-sm">
-                <button type="button" onClick={() => setMode("signup")} className={`h-11 px-3 rounded-md border ${mode === "signup" ? "bg-navy text-paper border-navy" : "border-line bg-white"}`}>
+                <button
+                  type="button"
+                  onClick={() => setMode("signup")}
+                  className={`h-11 px-3 rounded-md border ${
+                    mode === "signup" ? "bg-navy text-paper border-navy" : "border-line bg-white"
+                  }`}
+                >
                   Create login
                 </button>
-                <button type="button" onClick={() => setMode("signin")} className={`h-11 px-3 rounded-md border ${mode === "signin" ? "bg-navy text-paper border-navy" : "border-line bg-white"}`}>
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className={`h-11 px-3 rounded-md border ${
+                    mode === "signin" ? "bg-navy text-paper border-navy" : "border-line bg-white"
+                  }`}
+                >
                   I already have a login
                 </button>
               </div>
               <Field label="Password" required error={errors.password} hint="At least 8 characters.">
-                <TextInput type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} />
+                <TextInput
+                  type="password"
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </Field>
               {mode === "signup" ? (
                 <Field label="Confirm password" required error={errors.confirmPassword}>
-                  <TextInput type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  <TextInput
+                    type="password"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
                 </Field>
               ) : null}
             </>
           )}
+
           {errors.form ? <p className="text-sm text-bad mb-0">{errors.form}</p> : null}
+
           <div className="flex flex-wrap justify-between gap-3">
-            <button type="button" onClick={() => setStep("customer")} className="h-12 px-5 rounded-md border border-line bg-white font-medium hover:border-accent">
+            <button
+              type="button"
+              onClick={() => setStep("customer")}
+              className="h-12 px-5 rounded-md border border-line bg-white font-medium hover:border-accent"
+            >
               Back to customer
             </button>
-            <button type="submit" disabled={busy || isPending} className="h-12 px-6 rounded-md bg-navy text-paper font-medium disabled:opacity-40 hover:bg-navy-2">
-              {busy ? "Saving…" : sessionIsApplicant ? "Continue to business" : mode === "signup" ? "Create account and continue" : "Sign in and continue"}
+            <button
+              type="submit"
+              disabled={busy || isPending}
+              className="h-12 px-6 rounded-md bg-navy text-paper font-medium disabled:opacity-40 hover:bg-navy-2"
+            >
+              {busy
+                ? "Saving…"
+                : sessionIsApplicant
+                  ? "Continue to business"
+                  : mode === "signup"
+                    ? "Create account and continue"
+                    : "Sign in and continue"}
             </button>
           </div>
         </form>

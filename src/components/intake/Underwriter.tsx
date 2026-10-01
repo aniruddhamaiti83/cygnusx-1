@@ -4,6 +4,11 @@ import { useOrigination } from "@/lib/intake/store";
 import { Field, TextInput } from "./fields";
 import { SwarmLog } from "./SwarmLog";
 
+function pct(n: number | undefined) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return `${Math.round(n * 1000) / 10}%`;
+}
+
 export function Underwriter() {
   const scorecard = useOrigination((s) => s.scorecard);
   const decision = useOrigination((s) => s.decision);
@@ -11,9 +16,11 @@ export function Underwriter() {
   const recordDecision = useOrigination((s) => s.recordDecision);
   const llm = useOrigination((s) => s.llm);
   const uw = staffById("uw-diana");
-  const [rationale, setRationale] = useState(decision?.rationale ?? "");
+  const [reason, setReason] = useState(decision?.action === "reject" ? decision.rationale : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const releasable = Boolean(scorecard?.releasable);
+  const decided = decision?.action === "approve" || decision?.action === "reject";
 
   async function runPack() {
     setError("");
@@ -21,17 +28,21 @@ export function Underwriter() {
     try {
       await runStageAgents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Policy pack failed.");
+      setError(err instanceof Error ? err.message : "Credit decision failed.");
     } finally {
       setBusy(false);
     }
   }
 
-  async function decide(action: "approve" | "pend" | "reject") {
+  async function decide(action: "approve" | "reject") {
     setError("");
+    if (action === "reject" && !reason.trim()) {
+      setError("A rejection reason is required.");
+      return;
+    }
     setBusy(true);
     try {
-      await recordDecision(action, rationale);
+      await recordDecision(action, reason.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Decision failed.");
     } finally {
@@ -42,8 +53,10 @@ export function Underwriter() {
   return (
     <div className="grid gap-4">
       <p className="text-sm text-ink-soft rounded-md border border-line bg-white px-4 py-3">
-        Underwriter — {uw.name}. Multi-agent stage: supervisor dispatches the credit policy pack
-        and the evaluator. The scorecard recommends. The human of record decides.
+        Credit decision — {uw.name}. Three agents read the credit scores, the collateral
+        pledges, and the account statements. The proposal is releasable only at 97%
+        confidence and under 3% hallucination. You approve, or reject with a reason.
+        An approval lets the loan move on to Funding.
         {llm ? ` Model: ${llm.label}.` : ""}
       </p>
       {error ? <p className="text-sm text-bad mb-0">{error}</p> : null}
@@ -51,67 +64,87 @@ export function Underwriter() {
       <article className="rounded-lg bg-white border border-line p-5 sm:p-6 grid gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg mb-1">Credit policy pack</h2>
+            <h2 className="text-lg mb-1">Credit decision</h2>
             <p className="text-sm text-ink-soft mb-0">
-              Advisory only. SBSS is not the gate. Workers never write a Decision row.
+              Credit, Collateral, and Statements. They only cite what earlier stages stored.
             </p>
           </div>
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || decided}
             onClick={runPack}
             className="h-11 px-4 rounded-md bg-navy text-paper text-sm font-medium disabled:opacity-40 hover:bg-navy-2"
           >
-            {busy ? "Running swarm…" : scorecard ? "Re-run policy pack" : "Run policy pack"}
+            {busy ? "Running agents…" : scorecard ? "Re-run credit decision" : "Run credit decision"}
           </button>
         </div>
 
         {scorecard ? (
-          <div className="rounded-md border border-line bg-paper px-4 py-3">
-            <p className="font-medium mb-1 capitalize">Recommend {scorecard.recommendedAction}</p>
-            <p className="text-sm mb-2">{scorecard.narrative}</p>
-            <ul className="text-sm mb-2 pl-4 list-disc">
-              {scorecard.factors.map((f) => (
-                <li key={f}>{f}</li>
+          <div className="grid gap-3">
+            <div className="grid sm:grid-cols-3 gap-2">
+              {(scorecard.agents ?? []).map((agent) => (
+                <div key={agent.id} className="rounded-md border border-line bg-paper px-3 py-3">
+                  <p className="text-xs font-mono uppercase tracking-wide text-accent mb-1">{agent.name}</p>
+                  <p className="text-sm mb-0">{agent.summary}</p>
+                </div>
               ))}
-            </ul>
-            <p className="text-xs text-ink-faint mb-0 font-mono">
-              confidence {scorecard.confidence.toFixed(2)} · {scorecard.provider || scorecard.modelName} · artefact{" "}
-              {scorecard.artefactId.slice(0, 8)}
-            </p>
+            </div>
+            <div className="rounded-md border border-line px-4 py-3">
+              <p className="font-medium mb-1">
+                {releasable ? "Releasable proposal" : "Held — not releasable"}
+                {scorecard.recommendedAction === "approve" || scorecard.recommendedAction === "reject"
+                  ? ` · recommend ${scorecard.recommendedAction}`
+                  : ""}
+              </p>
+              <p className="text-sm mb-2">{scorecard.narrative}</p>
+              <p className="text-xs text-ink-faint mb-0 font-mono">
+                confidence {pct(scorecard.confidence)} (need 97%) · hallucination {pct(scorecard.hallucination)} (max 3%)
+                {scorecard.langsmith ? " · LangSmith" : " · local trace"}
+                {scorecard.traceId ? ` · ${scorecard.traceId.slice(0, 8)}` : ""}
+              </p>
+            </div>
+            {(scorecard.gaps ?? []).length > 0 ? (
+              <ul className="text-sm text-bad mb-0 pl-4 list-disc">
+                {scorecard.gaps!.map((gap) => (
+                  <li key={gap}>{gap}</li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         ) : (
-          <p className="text-sm text-ink-faint mb-0">Not run. Decision is locked until the pack writes a ScorecardResult.</p>
+          <p className="text-sm text-ink-faint mb-0">Not run. Approve stays locked until the three agents write a releasable proposal.</p>
         )}
       </article>
 
       <article className="rounded-lg bg-white border border-line p-5 sm:p-6 grid gap-4">
-        <h2 className="text-lg mb-0">Human decision</h2>
-        <Field label="Rationale" hint="Required for the audit trail. The swarm cannot fill this.">
-          <TextInput value={rationale} onChange={(e) => setRationale(e.target.value)} />
+        <h2 className="text-lg mb-0">Underwriter decision</h2>
+        <Field label="Rejection reason" hint="Required to reject. Leave blank only if you approve.">
+          <TextInput value={reason} onChange={(e) => setReason(e.target.value)} />
         </Field>
         {decision ? (
-          <p className="rounded-md bg-good-wash text-good px-4 py-3 text-sm mb-0">
-            {decision.action.toUpperCase()} by {decision.decidedBy}
-            {decision.rationale ? ` — ${decision.rationale}` : ""}
+          <p className={`rounded-md px-4 py-3 text-sm mb-0 ${decision.action === "approve" ? "bg-good-wash text-good" : "bg-bad/10 text-bad"}`}>
+            {decision.action === "approve"
+              ? `Approved by ${decision.decidedBy}. The loan can move to Funding.`
+              : `Rejected by ${decision.decidedBy}${decision.rationale ? ` — ${decision.rationale}` : ""}`}
           </p>
         ) : null}
         <div className="flex flex-wrap gap-2">
-          {(["approve", "pend", "reject"] as const).map((action) => (
-            <button
-              key={action}
-              type="button"
-              disabled={busy || !scorecard || Boolean(decision && decision.action === "approve")}
-              onClick={() => decide(action)}
-              className={`h-11 px-4 rounded-md text-sm font-medium disabled:opacity-40 ${
-                action === "approve"
-                  ? "bg-navy text-paper hover:bg-navy-2"
-                  : "border border-line bg-white hover:border-accent"
-              }`}
-            >
-              {action === "approve" ? "Approve" : action === "pend" ? "Pend" : "Reject"}
-            </button>
-          ))}
+          <button
+            type="button"
+            disabled={busy || !releasable || decision?.action === "approve"}
+            onClick={() => decide("approve")}
+            className="h-11 px-4 rounded-md bg-navy text-paper text-sm font-medium disabled:opacity-40 hover:bg-navy-2"
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            disabled={busy || !scorecard || decision?.action === "approve"}
+            onClick={() => decide("reject")}
+            className="h-11 px-4 rounded-md border border-line bg-white text-sm font-medium disabled:opacity-40 hover:border-accent"
+          >
+            Reject
+          </button>
         </div>
       </article>
 

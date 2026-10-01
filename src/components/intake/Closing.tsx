@@ -12,7 +12,7 @@ export function DocumentsStage() {
   return (
     <div className="grid gap-4">
       <p className="text-sm text-ink-soft rounded-md border border-line bg-white px-4 py-3">
-        Documents — Sam Ruiz. A document is not filed without imaging ACK and review.
+        Documents — Sam Ruiz. Credit decision is already on the file. ACK and review this package, then the loan moves to Funding.
       </p>
       {error ? <p className="text-sm text-bad mb-0">{error}</p> : null}
       <article className="rounded-lg bg-white border border-line p-5 sm:p-6">
@@ -67,7 +67,7 @@ export function DocumentsStage() {
           }}
           className="justify-self-start h-11 px-4 rounded-md bg-navy text-paper text-sm font-medium disabled:opacity-40"
         >
-          Move to Financing
+          Move to Funding
         </button>
       ) : null}
     </div>
@@ -84,7 +84,7 @@ export function FinancingStage() {
   return (
     <div className="grid gap-4">
       <p className="text-sm text-ink-soft rounded-md border border-line bg-white px-4 py-3">
-        Financing — human-authorized E-Tran. Workers never invent a guaranty number.
+        Funding — human-authorized E-Tran. Workers never invent a guaranty number.
       </p>
       {error ? <p className="text-sm text-bad mb-0">{error}</p> : null}
       <article className="rounded-lg bg-white border border-line p-5 sm:p-6">

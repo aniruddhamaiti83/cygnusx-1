@@ -142,7 +142,9 @@ export function CustomerForm() {
             <Select value={gender} onChange={(e) => setGender(e.target.value)}>
               <option value="">Select</option>
               {GENDERS.map((g) => (
-                <option key={g.id} value={g.id}>{g.label}</option>
+                <option key={g.id} value={g.id}>
+                  {g.label}
+                </option>
               ))}
             </Select>
           </Field>
@@ -150,7 +152,9 @@ export function CustomerForm() {
             <Select value={race} onChange={(e) => setRace(e.target.value)}>
               <option value="">Select</option>
               {RACES.map((g) => (
-                <option key={g.id} value={g.id}>{g.label}</option>
+                <option key={g.id} value={g.id}>
+                  {g.label}
+                </option>
               ))}
             </Select>
           </Field>
@@ -158,7 +162,9 @@ export function CustomerForm() {
             <Select value={ethnicity} onChange={(e) => setEthnicity(e.target.value)}>
               <option value="">Select</option>
               {ETHNICITIES.map((g) => (
-                <option key={g.id} value={g.id}>{g.label}</option>
+                <option key={g.id} value={g.id}>
+                  {g.label}
+                </option>
               ))}
             </Select>
           </Field>
@@ -175,7 +181,12 @@ export function CustomerForm() {
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="text-lg mb-0">Mailing address</h2>
           <label className="flex items-center gap-2 text-sm whitespace-nowrap">
-            <input type="checkbox" className="size-4 accent-navy" checked={sameMailing} onChange={(e) => setSameMailing(e.target.checked)} />
+            <input
+              type="checkbox"
+              className="size-4 accent-navy"
+              checked={sameMailing}
+              onChange={(e) => setSameMailing(e.target.checked)}
+            />
             Same as primary
           </label>
         </div>
@@ -192,7 +203,11 @@ export function CustomerForm() {
       </div>
 
       <div className="flex justify-end">
-        <button type="submit" disabled={!canSubmit || busy} className="h-12 px-6 rounded-md bg-navy text-paper font-medium disabled:opacity-40 hover:bg-navy-2 transition-colors duration-150">
+        <button
+          type="submit"
+          disabled={!canSubmit || busy}
+          className="h-12 px-6 rounded-md bg-navy text-paper font-medium disabled:opacity-40 hover:bg-navy-2 transition-colors duration-150"
+        >
           {busy ? "Saving…" : existing ? "Save customer and continue" : "Create customer and verify email"}
         </button>
       </div>

@@ -25,16 +25,29 @@ export function Cover() {
           record approves every credit decision.
         </p>
         <div className="flex flex-wrap gap-3 mb-8">
-          <a href="#oem" className="inline-flex items-center h-12 px-5 rounded-md bg-white text-navy font-medium no-underline hover:bg-paper-2 transition-colors duration-150">
+          <a
+            href="#oem"
+            className="inline-flex items-center h-12 px-5 rounded-md bg-white text-navy font-medium no-underline hover:bg-paper-2 transition-colors duration-150"
+          >
             Data model
           </a>
-          <a href="#stageflow" className="inline-flex items-center h-12 px-5 rounded-md border border-white/30 text-paper font-medium no-underline hover:bg-white/10 transition-colors duration-150">
+          <a
+            href="#stageflow"
+            className="inline-flex items-center h-12 px-5 rounded-md border border-white/30 text-paper font-medium no-underline hover:bg-white/10 transition-colors duration-150"
+          >
             Process flow
           </a>
-          <a href="#swarm" className="inline-flex items-center h-12 px-5 rounded-md border border-white/30 text-paper font-medium no-underline hover:bg-white/10 transition-colors duration-150">
+          <a
+            href="#swarm"
+            className="inline-flex items-center h-12 px-5 rounded-md border border-white/30 text-paper font-medium no-underline hover:bg-white/10 transition-colors duration-150"
+          >
             Orchestration
           </a>
-          <a href="/cygnusx-1-blueprint.html" download="CygnusX-1-Blueprint.html" className="inline-flex items-center h-12 px-5 rounded-md border border-white/30 text-paper font-medium no-underline hover:bg-white/10 transition-colors duration-150">
+          <a
+            href="/cygnusx-1-blueprint.html"
+            download="CygnusX-1-Blueprint.html"
+            className="inline-flex items-center h-12 px-5 rounded-md border border-white/30 text-paper font-medium no-underline hover:bg-white/10 transition-colors duration-150"
+          >
             Download HTML
           </a>
         </div>

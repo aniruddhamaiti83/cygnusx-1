@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cygnusx1
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cygnusx1}
+      POSTGRES_DB: cygnusx1
+    volumes:
+      - cygnusx1_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cygnusx1 -d cygnusx1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # Uncomment to reach Postgres from the host (pgAdmin, psql):
+    # ports:
+    #   - "5432:5432"
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: cygnusx1-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://cygnusx1:${POSTGRES_PASSWORD:-cygnusx1}@db:5432/cygnusx1
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-llama3.1}
+      LLM_TIMEOUT: ${LLM_TIMEOUT:-60}
+      XAI_API_KEY: ${XAI_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  cygnusx1_pg:

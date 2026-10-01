@@ -3,12 +3,14 @@ set -eu
 cd /workspace
 node scripts/preview.mjs stop || true
 
-if ! curl -sf -o /dev/null --max-time 2 http://127.0.0.1:8000/api/cx1/health; then
+SOCK="${CX1_API_SOCK:-/tmp/cx1-api.sock}"
+if ! curl -sf -o /dev/null --max-time 2 --unix-socket "$SOCK" http://127.0.0.1/api/cx1/health; then
   mkdir -p /workspace/backend/data
-  PYTHONUNBUFFERED=1 python3 -m uvicorn app.main:app --app-dir /workspace/backend --host 127.0.0.1 --port 8000 >>/tmp/cx1-api.log 2>&1 &
+  rm -f "$SOCK"
+  PYTHONUNBUFFERED=1 python3 -m uvicorn app.main:app --app-dir /workspace/backend --uds "$SOCK" --reload >>/tmp/cx1-api.log 2>&1 &
   i=0
   while [ "$i" -lt 40 ]; do
-    if curl -sf -o /dev/null --max-time 1 http://127.0.0.1:8000/api/cx1/health; then
+    if curl -sf -o /dev/null --max-time 1 --unix-socket "$SOCK" http://127.0.0.1/api/cx1/health; then
       break
     fi
     i=$((i + 1))

@@ -60,6 +60,8 @@ export const cx1 = {
     api<OriginationFile>(`/processes/${id}/agents/commercial-credit`, { method: "POST", body }),
   sanctions: (id: string) => api<OriginationFile>(`/processes/${id}/agents/sanctions`, { method: "POST" }),
   kyb: (id: string, body: unknown) => api<OriginationFile>(`/processes/${id}/agents/kyb`, { method: "POST", body }),
+  processingPack: (id: string, body?: unknown) =>
+    api<OriginationFile>(`/processes/${id}/agents/processing-pack`, { method: "POST", body: body ?? {} }),
   saveSba: (id: string, body: unknown) => api<OriginationFile>(`/processes/${id}/sba-profile`, { method: "PUT", body }),
   addCollateral: (id: string, body: unknown) => api<OriginationFile>(`/processes/${id}/collateral`, { method: "POST", body }),
   decide: (id: string, body: { action: string; rationale: string }) =>

@@ -77,3 +77,11 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+.schema-grid {
+  background-color: var(--color-white);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-line) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-line) 70%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}

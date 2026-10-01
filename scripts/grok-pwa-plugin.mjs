@@ -77,6 +77,13 @@ function serveGrokPwa(middlewares) {
   });
 }
 
+/**
+ * Wrap res.write/res.end on app-document requests to inject missing PWA head
+ * tags at the `</head>` boundary as chunks stream through (no full-document
+ * buffering, so streaming SSR keeps its early flush). Skips anything already
+ * content-encoded: under `vite preview` the compression middleware can hand
+ * this wrapper gzipped bytes, which must pass through untouched.
+ */
 function wrapHtmlResponses(middlewares, cwd) {
   middlewares.use((req, res, next) => {
     const rawUrl = req.url ?? "";
@@ -99,13 +106,15 @@ function wrapHtmlResponses(middlewares, cwd) {
       host,
       cwd,
     });
-    let mode = null;
+    let mode = null; // null = undecided, "inject" | "passthrough"
 
     const decideMode = () => {
       if (mode) return mode;
       const isHtml = String(res.getHeader("content-type") ?? "").includes("text/html");
       const encoded = Boolean(res.getHeader("content-encoding"));
       mode = isHtml && !encoded ? "inject" : "passthrough";
+      // Streaming SSR flushes headers before the first body chunk, so the
+      // header may no longer be removable — chunked responses don't carry one.
       if (mode === "inject" && !res.headersSent) res.removeHeader("content-length");
       return mode;
     };
@@ -163,11 +172,16 @@ export function grokPwaPlugin() {
       });
     },
     configureServer(server) {
+      // Registered directly (not in a returned post-hook) so both run BEFORE
+      // TanStack Start's SSR middleware, like the auth-popup plugin.
       serveGrokPwa(server.middlewares);
       wrapHtmlResponses(server.middlewares, root);
     },
     configurePreviewServer(server) {
       serveGrokPwa(server.middlewares);
+      // Post-hook: preview registers compression between the direct hooks and
+      // the post-hooks, and the injector must wrap AFTER compression so it
+      // sees plaintext HTML (compression then compresses the injected output).
       return () => {
         wrapHtmlResponses(server.middlewares, root);
       };

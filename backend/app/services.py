@@ -1,4 +1,5 @@
 from datetime import date
+import json
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -427,28 +428,13 @@ def advance(db: Session, process: models.Process, user=None) -> models.Process:
                 detail="Complete Customer, email verification, Business, and save Loan details first.",
             )
     elif stage == "preApplication":
-        consumer = (
-            db.query(models.CreditPull)
-            .filter_by(process_id=process.process_id, party_kind="customer")
-            .first()
-        )
-        commercial = (
-            db.query(models.CreditPull)
-            .filter_by(process_id=process.process_id, party_kind="business")
-            .first()
-        )
+        pulls = db.query(models.CreditPull).filter_by(process_id=process.process_id).all()
         fraud = db.query(models.SanctionsScreen).filter_by(process_id=process.process_id).first()
-        if not (
-            consumer
-            and commercial
-            and fraud
-            and consumer.outcome == "pass"
-            and commercial.outcome == "pass"
-            and fraud.outcome == "pass"
-        ):
+        qualified = any(p.outcome == "pass" for p in pulls) or (fraud is not None and fraud.outcome == "pass")
+        if not qualified:
             raise HTTPException(
                 status_code=409,
-                detail="Consumer credit, business credit, and fraud must pass.",
+                detail="Run one qualifying check: consumer credit, business credit, or fraud history.",
             )
     elif stage == "processing":
         kyb = db.query(models.KybReport).filter_by(process_id=process.process_id).first()
@@ -465,7 +451,7 @@ def advance(db: Session, process: models.Process, user=None) -> models.Process:
     elif stage == "underwriter":
         decision = db.query(models.Decision).filter_by(process_id=process.process_id).first()
         if not decision or decision.action != "approve":
-            raise HTTPException(status_code=409, detail="Human Decision must approve before documents.")
+            raise HTTPException(status_code=409, detail="Approve the credit decision before the loan can move to Funding.")
     elif stage == "documents":
         docs = db.query(models.DocumentRow).filter_by(process_id=process.process_id).all()
         if not docs or any(not d.imaged_ack or not d.reviewed for d in docs):
@@ -521,7 +507,15 @@ def save_sba_profile(db: Session, process: models.Process, payload: dict, user=N
     row.annual_receipts = str(payload.get("annualReceipts") or "")
     row.is_franchise = bool(payload.get("isFranchise"))
     row.size_standard_met = bool(payload.get("sizeStandardMet", True))
-    row.notes = payload.get("notes") or ""
+    row.notes = payload.get("notes") or row.notes or ""
+    if payload.get("mockReport") is not None:
+        row.mock_report_json = json.dumps(payload["mockReport"]) if not isinstance(payload["mockReport"], str) else payload["mockReport"]
+    if payload.get("samStatus") is not None:
+        row.sam_status = str(payload.get("samStatus") or "")
+    if payload.get("sizeStandard") is not None:
+        row.size_standard = str(payload.get("sizeStandard") or "")
+    if payload.get("eligibilityStatus") is not None:
+        row.eligibility_status = str(payload.get("eligibilityStatus") or "")
     db.add(
         models.AuditEvent(
             process_id=process.process_id,
@@ -548,6 +542,7 @@ def add_collateral(db: Session, process: models.Process, payload: dict, user=Non
         label=label,
         description=(payload.get("description") or "").strip(),
         value=str(payload.get("value") or ""),
+        location=(payload.get("location") or "").strip(),
         owner_ref=payload.get("ownerRef") or "",
     )
     db.add(item)
@@ -594,11 +589,21 @@ def record_decision(db: Session, process: models.Process, action: str, rationale
     assert_can_write(process, user)
     if process.current_stage != "underwriter":
         raise HTTPException(status_code=409, detail="Decision is recorded at Underwriter.")
-    if action not in ("approve", "pend", "reject"):
-        raise HTTPException(status_code=400, detail="Action must be approve, pend, or reject.")
+    if action not in ("approve", "reject"):
+        raise HTTPException(status_code=400, detail="Action must be approve or reject.")
+    if action == "reject" and not (rationale or "").strip():
+        raise HTTPException(status_code=400, detail="A rejection reason is required.")
     scorecard = db.query(models.ScorecardResult).filter_by(process_id=process.process_id).first()
     if not scorecard:
-        raise HTTPException(status_code=409, detail="Run the policy pack before deciding.")
+        raise HTTPException(status_code=409, detail="Run the credit decision before deciding.")
+    hall = scorecard.hallucination if scorecard.hallucination is not None else 1.0
+    if action == "approve" and (
+        not scorecard.releasable or scorecard.confidence < 0.97 or hall > 0.03
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="The proposal is not releasable. Confidence must be at least 97% and hallucination under 3%.",
+        )
     row = db.query(models.Decision).filter_by(process_id=process.process_id).first()
     if not row:
         row = models.Decision(process_id=process.process_id)

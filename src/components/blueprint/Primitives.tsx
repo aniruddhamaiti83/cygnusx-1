@@ -53,7 +53,9 @@ export function Card({ title, children }: { title: string; children: ReactNode }
 
 export function Grid({ cols, children }: { cols: 2 | 3; children: ReactNode }) {
   return (
-    <div className={`grid gap-4 my-5 ${cols === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+    <div
+      className={`grid gap-4 my-5 ${cols === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+    >
       {children}
     </div>
   );
@@ -77,7 +79,10 @@ export function DocTable({
         <thead>
           <tr>
             {headers.map((h) => (
-              <th key={h} className="text-left font-semibold text-navy border-b-2 border-navy px-2.5 py-2">
+              <th
+                key={h}
+                className="text-left font-semibold text-navy border-b-2 border-navy px-2.5 py-2"
+              >
                 {h}
               </th>
             ))}
@@ -87,7 +92,10 @@ export function DocTable({
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
-                <td key={j} className="px-2.5 py-2.5 border-b border-line align-top">
+                <td
+                  key={j}
+                  className="px-2.5 py-2.5 border-b border-line align-top"
+                >
                   {cell}
                 </td>
               ))}

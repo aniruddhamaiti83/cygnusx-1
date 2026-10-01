@@ -72,6 +72,7 @@ export type Collateral = {
   label: string;
   description?: string;
   value?: string;
+  location?: string;
   ownerRef?: string;
 };
 
@@ -101,6 +102,13 @@ export type CreditPull = {
   source: string;
   productCode: string;
   score: number;
+  scoreType: string;
+  lastCheckedAt: string | null;
+  yearsSinceFirstCredit: number | null;
+  outstandingAmount: number | null;
+  utilizationPct: number | null;
+  openTradelines: number | null;
+  pastDueAmount: number | null;
   artefactId: string;
   fcraPurpose: string | null;
   outcome: "pass" | "fail";
@@ -133,6 +141,28 @@ export type KybReport = {
   provider?: string;
 };
 
+export type ProcessingCheck = {
+  api: string;
+  vendor: string;
+  status: string;
+  detail: string;
+};
+
+export type ProcessingReport = {
+  mocked?: boolean;
+  ranAt?: string;
+  source?: string;
+  customer?: { name?: string; ssnLast4?: string; dob?: string };
+  business?: { legalName?: string; taxIdLast4?: string; naicsCode?: string };
+  inputs?: { employeeCount?: number; annualReceipts?: number; sizeStandard?: string };
+  checks?: ProcessingCheck[];
+  eligibility?: string;
+  sizeStandardMet?: boolean;
+  isFranchise?: boolean;
+  samStatus?: string;
+  notes?: string;
+};
+
 export type SbaProfile = {
   sbaProfileId: string;
   processId: string;
@@ -143,14 +173,34 @@ export type SbaProfile = {
   isFranchise: boolean;
   sizeStandardMet: boolean;
   notes: string;
+  mockReport?: ProcessingReport | null;
+  samStatus?: string;
+  sizeStandard?: string;
+  eligibilityStatus?: string;
+  ranAt?: string | null;
+  actor?: string;
+  artefactId?: string;
+  provider?: string;
+};
+
+export type ScorecardAgent = {
+  id: string;
+  name: string;
+  summary: string;
 };
 
 export type Scorecard = {
   scorecardId: string;
-  recommendedAction: "approve" | "pend" | "reject";
+  recommendedAction: "approve" | "reject" | "hold" | "pend";
   confidence: number;
+  hallucination?: number;
+  releasable?: boolean;
+  traceId?: string;
   factors: string[];
   narrative: string;
+  agents?: ScorecardAgent[];
+  gaps?: string[];
+  langsmith?: boolean;
   artefactId: string;
   provider: string;
   modelName: string;
@@ -264,6 +314,7 @@ type OriginationState = {
   runCommercial: (source: string, product: string) => Promise<void>;
   runFraud: () => Promise<void>;
   runKyb: (source: string) => Promise<void>;
+  runProcessingPack: (source?: string) => Promise<void>;
   saveSbaProfile: (payload: Record<string, unknown>) => Promise<void>;
   addCollateral: (payload: Record<string, unknown>) => Promise<void>;
   runStageAgents: (extra?: Record<string, unknown>) => Promise<void>;
@@ -371,18 +422,28 @@ export const useOrigination = create<OriginationState>((set, get) => ({
   },
   hydrate: async () => {
     try {
-      const llm = await cx1.llm().catch(() => null);
+      const health = await cx1.health();
+      const llm = health.llm ?? (await cx1.llm().catch(() => null));
       const pid = readPid();
       if (pid) {
         const file = await cx1.getProcess(pid);
         get().applyFile(file);
-        set({ hydrated: true, llm });
+        set({ hydrated: true, llm, apiError: "" });
         return;
       }
-      set({ hydrated: true, llm, ...emptyFile, team: defaultTeam() });
-    } catch {
+      set({ hydrated: true, llm, apiError: "", ...emptyFile, team: defaultTeam() });
+    } catch (err) {
       writePid("");
-      set({ hydrated: true, ...emptyFile, team: defaultTeam() });
+      set({
+        hydrated: true,
+        apiError:
+          err instanceof Error && err.message
+            ? err.message
+            : "Origination API is not running. In a second terminal from the repo root run: npm run api",
+        llm: null,
+        ...emptyFile,
+        team: defaultTeam(),
+      });
     }
   },
   saveCustomer: async (payload) => {
@@ -429,6 +490,10 @@ export const useOrigination = create<OriginationState>((set, get) => ({
   },
   runKyb: async (source) => {
     const file = await cx1.kyb(get().processId, { kybSource: source });
+    get().applyFile(file);
+  },
+  runProcessingPack: async (source = "sos") => {
+    const file = await cx1.processingPack(get().processId, { kybSource: source });
     get().applyFile(file);
   },
   saveSbaProfile: async (payload) => {

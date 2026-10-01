@@ -97,6 +97,7 @@ class CollateralBody(BaseModel):
     policyNumber: str = ""
     coverageAmount: str = ""
     expiresOn: str = ""
+    location: str = ""
 
 
 class DecisionBody(BaseModel):
@@ -335,6 +336,24 @@ def kyb(
     services.assert_can_write(process, user)
     try:
         workers.run_kyb(db, process, body.kybSource)
+        db.commit()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    db.refresh(process)
+    return _file(db, process)
+
+
+@router.post("/processes/{process_id}/agents/processing-pack")
+def processing_pack(
+    process_id: str,
+    body: AgentBody | None = None,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user_optional),
+):
+    process = services.get_process(db, process_id)
+    services.assert_can_write(process, user)
+    try:
+        workers.run_processing_pack(db, process, (body.kybSource if body else "sos"))
         db.commit()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

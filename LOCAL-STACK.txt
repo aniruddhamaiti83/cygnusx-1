@@ -23,6 +23,10 @@ Agents:   LangChain supervisor + stage workers
    pip install -r requirements.txt
    uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
+   Or Docker (API on 8000 + Postgres):
+   docker compose up --build
+   Health: http://127.0.0.1:8000/api/cx1/health
+
 4. Frontend
    npm install
    npm run dev

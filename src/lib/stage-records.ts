@@ -78,8 +78,8 @@ export const STAGE_FLOWS: StageFlow[] = [
     id: "02",
     n: "02",
     name: "Pre-Application",
-    purpose: "Consumer CRA on the liable person, commercial bureau on the Business, OFAC on every participant.",
-    gate: "Consumer pull, commercial pull, and OFAC must pass. Fail closes the process. Incomplete checks loop here.",
+    purpose: "Qualify the customer to continue. Consumer CRA, commercial bureau, and OFAC are independent checks — any one pass is enough.",
+    gate: "Any one passing check (consumer credit, business credit, or fraud history) advances. Incomplete loops here. A failed check does not reject the file if another path still qualifies.",
     records: [
       {
         verb: "assign",
@@ -90,23 +90,23 @@ export const STAGE_FLOWS: StageFlow[] = [
         verb: "create",
         record: "CreditPull (consumer)",
         detail:
-          "partyKind = customer. Equifax / Experian / TransUnion. FCRA purpose = this processId. artefactId stored. No re-pull on retry.",
+          "Optional. partyKind = customer. Equifax / Experian / TransUnion. Stores scoreType, lastCheckedAt, yearsSinceFirstCredit, outstandingAmount. FCRA purpose = this processId. No re-pull on retry. A pass qualifies the customer on its own.",
       },
       {
         verb: "create",
         record: "CreditPull (commercial)",
         detail:
-          "partyKind = business. Experian Business, Equifax SBFE, or D&B PAYDEX. Not a consumer FICO and not SBSS (sunset 1 Mar 2026).",
+          "Optional. partyKind = business. Experian Business, Equifax SBFE, or D&B PAYDEX. Same score snapshot fields. Not SBSS (sunset 1 Mar 2026). A pass qualifies the customer on its own.",
       },
       {
         verb: "create",
         record: "SanctionsScreen",
-        detail: "OFAC / SDN on each participant. Hit → process rejected. Fraud is not a bureau.",
+        detail: "Optional. OFAC / SDN on each participant. A pass qualifies the customer on its own. A hit does not reject the file — they can still qualify on a bureau pull.",
       },
       {
         verb: "gate",
         record: "Process",
-        detail: "All three pass → currentStage = 03. Any fail → stageStatus = rejected.",
+        detail: "Any one passing CreditPull or SanctionsScreen → currentStage = 03. Nothing run, or all run and none passed → loop here.",
       },
     ],
   },
@@ -114,8 +114,8 @@ export const STAGE_FLOWS: StageFlow[] = [
     id: "03",
     n: "03",
     name: "Processing",
-    purpose: "Spread statements, KYB, size/eligibility, debts. Still inside origination.",
-    gate: "Spreads and KYB accepted (or logged override). Incomplete activities loop here.",
+    purpose: "Mock vendor pack: KYB, SBA size/eligibility, SAM, franchise. Report stored on SbaProfile.",
+    gate: "KybReport + SbaProfile (mock pack). Incomplete loops here.",
     records: [
       {
         verb: "assign",
@@ -130,7 +130,7 @@ export const STAGE_FLOWS: StageFlow[] = [
       {
         verb: "create",
         record: "SbaProfile",
-        detail: "Size standard, NAICS eligibility, franchise flag, receipts and employees on the org.",
+        detail: "Size standard, NAICS eligibility, franchise, SAM. mockReport JSON holds the customer processing pack until live APIs land.",
       },
       {
         verb: "create",
@@ -153,7 +153,7 @@ export const STAGE_FLOWS: StageFlow[] = [
     id: "04",
     n: "04",
     name: "Collateral",
-    purpose: "Typed collateral on this loan. Nothing pledged without an item.",
+    purpose: "Typed collateral, lien position, location, insurance. Mock UCC-1 on the worker.",
     gate: "At least one validated CollateralItem + Pledge, or a documented exception.",
     records: [
       {

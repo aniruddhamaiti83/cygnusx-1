@@ -1,4 +1,5 @@
 import { readdirSync } from "node:fs";
+import http from "node:http";
 import { join } from "node:path";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
@@ -11,6 +12,50 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
+
+function cx1ApiProxyPlugin(): Plugin {
+  const sock = process.env.CX1_API_SOCK || "/tmp/cx1-api.sock";
+  return {
+    name: "cx1-api-unix-proxy",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = req.url ?? "";
+        const pathOnly = url.split("?", 1)[0] ?? "";
+        if (!pathOnly.startsWith("/api/cx1")) {
+          next();
+          return;
+        }
+        const headers: http.OutgoingHttpHeaders = { ...req.headers };
+        delete headers.connection;
+        delete headers["content-length"];
+        const proxy = http.request(
+          {
+            socketPath: sock,
+            path: url,
+            method: req.method,
+            headers,
+          },
+          (pres) => {
+            res.statusCode = pres.statusCode ?? 502;
+            for (const [key, value] of Object.entries(pres.headers)) {
+              if (value === undefined || key === "transfer-encoding") continue;
+              res.setHeader(key, value);
+            }
+            pres.pipe(res);
+          },
+        );
+        proxy.on("error", () => {
+          if (res.headersSent) return;
+          res.statusCode = 503;
+          res.setHeader("content-type", "application/json");
+          res.end(JSON.stringify({ detail: "Origination API is not running." }));
+        });
+        req.pipe(proxy);
+      });
+    },
+  };
+}
 
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
@@ -150,27 +195,16 @@ export default defineConfig(({ command, isPreview }) => ({
     host: "0.0.0.0",
     port: 8080,
     strictPort: true,
-    proxy: {
-      "/api/cx1": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-    },
   },
   preview: {
     host: "127.0.0.1",
     port: 8081,
     strictPort: true,
-    proxy: {
-      "/api/cx1": {
-        target: "http://127.0.0.1:8000",
-        changeOrigin: true,
-      },
-    },
   },
   resolve: { tsconfigPaths: true },
   plugins: [
     pgliteBootstrapPlugin(),
+    cx1ApiProxyPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.
     authPopupPlugin(),
     // Dev-only /__app-env, read by scripts/check-auth-invariant.mjs.

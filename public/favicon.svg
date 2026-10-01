@@ -1,4 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#102536"/>
-  <text x="16" y="22" text-anchor="middle" font-size="14" fill="#f2efe8" font-family="serif">CX</text>
+  <rect width="32" height="32" rx="4" fill="#102536"/>
+  <circle cx="8" cy="22" r="2" fill="#6a93a6"/>
+  <circle cx="16" cy="10" r="2.2" fill="#d7e4ea"/>
+  <circle cx="24" cy="18" r="2" fill="#6a93a6"/>
+  <path d="M8 22 L16 10 L24 18" fill="none" stroke="#6a93a6" stroke-width="1.4"/>
 </svg>

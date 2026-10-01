@@ -28,7 +28,7 @@ def llm_status() -> dict:
     if settings.llm_base_url.strip():
         return {
             "provider": "local",
-            "label": f"Local \u00b7 {settings.llm_model}",
+            "label": f"Local · {settings.llm_model}",
             "model": settings.llm_model,
             "baseUrl": settings.llm_base_url.rstrip("/"),
             "configured": True,
@@ -36,7 +36,7 @@ def llm_status() -> dict:
     if settings.xai_api_key:
         return {
             "provider": "xai",
-            "label": f"xAI \u00b7 {XAI_MODEL}",
+            "label": f"xAI · {XAI_MODEL}",
             "model": XAI_MODEL,
             "baseUrl": XAI_BASE,
             "configured": True,
@@ -127,6 +127,13 @@ def heuristic_payload(prompt: str) -> dict:
             "confidence": 0.72,
             "summary": "Consumer bureau pull on the liable individual. FCRA purpose bound to this process. Score is advisory of capacity, not a substitute for commercial analysis.",
             "factors": ["Thin but clean revolving history", "No recent charge-offs", "Utilization moderate"],
+            "scoreType": "FICO Score 9",
+            "lastCheckedAt": "2026-09-08",
+            "yearsSinceFirstCredit": 14,
+            "outstandingAmount": 18420,
+            "utilizationPct": 31,
+            "openTradelines": 7,
+            "pastDueAmount": 0,
         }
     if "commercial" in p or "paydex" in p or "intelliscore" in p:
         score = 80 if "dnb" in p or "paydex" in p else 76
@@ -136,15 +143,22 @@ def heuristic_payload(prompt: str) -> dict:
             "confidence": 0.7,
             "summary": "Commercial bureau on the operating company. Not a consumer CRA. Tradeline / PAYDEX-style pay habits used.",
             "factors": ["Trade experiences current", "No open collections on the business"],
+            "scoreType": "PAYDEX" if "dnb" in p or "paydex" in p else "Intelliscore Plus",
+            "lastCheckedAt": "2026-09-08",
+            "yearsSinceFirstCredit": 9,
+            "outstandingAmount": 126500,
+            "utilizationPct": 42,
+            "openTradelines": 11,
+            "pastDueAmount": 0,
         }
     if "ofac" in p or "sanctions" in p or "sdn" in p:
         hit = any(k in p for k in ("blocked", "osama", "cartel", "sdn-hit"))
         return {
             "outcome": "fail" if hit else "pass",
             "confidence": 0.9,
-            "summary": "OFAC SDN name screen on Customer and Business. Hit fail-closes the process."
+            "summary": "OFAC SDN name screen on Customer and Business. Hit recorded; Pre-application still qualifies on a passing credit pull."
             if hit
-            else "OFAC / SDN and internal fraud on Customer and Business. No match. A hit would reject the process.",
+            else "OFAC / SDN and internal fraud on Customer and Business. No match. This screen is one of three qualifying checks at Pre-application.",
             "matches": [],
         }
     if "kyb" in p or "secretary of state" in p:
@@ -169,7 +183,7 @@ def heuristic_payload(prompt: str) -> dict:
             "narrative": "Policy pack is advisory. Consumer FICO, commercial bureau, KYB, and collateral coverage support an approve recommendation for SBA 7(a)-style credit, subject to the human of record. SBSS is not the gate (sunset 1 Mar 2026).",
             "factors": [
                 "Consumer credit pass with artefact",
-                "Commercial bureau pass \u2014 not a consumer score",
+                "Commercial bureau pass — not a consumer score",
                 "OFAC clear",
                 "KYB active",
                 "At least one pledged collateral item or documented exception",
@@ -179,7 +193,7 @@ def heuristic_payload(prompt: str) -> dict:
         return {
             "outcome": "pass",
             "confidence": 0.8,
-            "summary": "Evaluator: artefacts present, fail-closed gates grounded, scorecard does not decide. Package ready for the human of record.",
+            "summary": "Evaluator: a qualifying artefact is present, scorecard does not decide. Package ready for the human of record.",
             "issues": [],
         }
     if "document" in p:

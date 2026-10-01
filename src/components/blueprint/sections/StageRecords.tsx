@@ -8,14 +8,16 @@ export function StageRecordsSection() {
     <Section id="stageflow" n="03" title="Process Flow & Table Updates">
       <Lede>
         Quote-to-Cash is eight sequential stages. Incomplete work loops inside the stage.
-        A failed gate (consumer credit, commercial credit, OFAC, underwriter reject) closes
+        Pre-application qualifies the customer: any one passing check (consumer credit,
+        business credit, or fraud) advances the file. An underwriter reject closes
         the process. The matrix shows which canonical table each stage creates, updates,
         assigns, or gates.
       </Lede>
       <Callout>
         <strong>01 Intake —</strong> Customer, email verification + ApplicantAccount, Business,
-        then Loan. <strong>02 Pre-application —</strong> consumer CreditPull, commercial
-        CreditPull, OFAC. RM Elena Voss starts the file; credit and fraud join at 02.
+        then Loan. <strong>02 Pre-application —</strong> qualify the customer: consumer
+        CreditPull, commercial CreditPull, or OFAC — any one pass is enough. RM Elena Voss
+        starts the file; credit and fraud join at 02.
       </Callout>
       <H3>What each stage writes</H3>
       <DocTable

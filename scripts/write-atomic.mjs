@@ -74,6 +74,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     console.error(`[write-atomic] ${args.error}`);
     process.exit(1);
   }
+  // Relative paths follow this script's root, not the caller's cwd: the brand
+  // pass runs from wherever its sub-shell left it, and the public/ refusal
+  // below is defined against that same root.
   const staged = resolve(ROOT, args.staged);
   const target = resolve(ROOT, args.target);
   const problem = stagingError({ staged, target, publicDir: join(ROOT, "public") });
