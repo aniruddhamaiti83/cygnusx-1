@@ -3,16 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .db import init_db
 from .routers import auth, cx1
+from .settings import settings
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="CygnusX-1", version="0.2.0")
+    origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=r".*",
+        allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
     )
     app.include_router(auth.router)
     app.include_router(cx1.router)

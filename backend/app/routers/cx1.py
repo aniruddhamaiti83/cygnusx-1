@@ -148,8 +148,13 @@ def create_process(db: Session = Depends(get_db), user: User | None = Depends(cu
 
 
 @router.get("/processes/{process_id}")
-def get_process(process_id: str, db: Session = Depends(get_db)):
+def get_process(
+    process_id: str,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(current_user_optional),
+):
     process = services.get_process(db, process_id)
+    services.assert_can_read(process, user)
     return _file(db, process)
 
 

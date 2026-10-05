@@ -21,8 +21,13 @@ def digits_only(value: str) -> str:
 
 
 def tokenize_tax_id(raw: str) -> tuple[str, str]:
+    """HMAC the digits. A bare SHA-256 of an SSN is reversible by enumeration."""
     digits = digits_only(raw)
-    token = hashlib.sha256(f"cx1.tax:{digits}".encode()).hexdigest()
+    token = hmac.new(
+        settings.secret_key.encode("utf-8"),
+        f"cx1.tax:{digits}".encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
     return token, digits[-4:] if digits else ""
 
 

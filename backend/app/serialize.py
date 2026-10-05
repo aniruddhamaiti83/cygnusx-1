@@ -53,7 +53,6 @@ def customer_dict(db: Session, row: models.Customer | None) -> dict | None:
         "emailConfirmed": row.email_confirmed,
         "emailVerified": row.email_verified,
         "authUserId": row.auth_user_id,
-        "ssnToken": row.ssn_token,
         "ssnLast4": row.ssn_last4,
         "dob": row.dob,
         "gender": row.gender,
@@ -72,7 +71,6 @@ def business_dict(db: Session, row: models.Business | None) -> dict | None:
     return {
         "businessId": row.business_id,
         "legalName": row.legal_name,
-        "taxIdToken": row.tax_id_token,
         "taxIdLast4": row.tax_id_last4,
         "businessType": row.business_type,
         "incorporatedOn": row.incorporated_on,

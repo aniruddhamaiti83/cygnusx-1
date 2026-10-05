@@ -31,7 +31,7 @@ export const STAGE_FLOWS: StageFlow[] = [
         verb: "create",
         record: "Customer",
         detail:
-          "Person: firstName, lastName, email, phone, ssnToken + ssnLast4, dob, gender, race, ethnicity. Role defaults to borrower.",
+          "Person: firstName, lastName, email, phone, ssnLast4, dob, gender, race, ethnicity. The SSN token stays on the server. Role defaults to borrower.",
       },
       {
         verb: "create",
@@ -48,7 +48,7 @@ export const STAGE_FLOWS: StageFlow[] = [
         verb: "create",
         record: "Business",
         detail:
-          "Operating company: legalName, taxIdToken, businessType, incorporatedOn, naicsCode, primary address, requested amount and purpose.",
+          "Operating company: legalName, taxIdLast4, businessType, incorporatedOn, naicsCode, primary address, requested amount and purpose. The EIN token stays on the server.",
       },
       {
         verb: "create",

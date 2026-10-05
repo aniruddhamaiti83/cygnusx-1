@@ -65,7 +65,7 @@ export function PipelineSections() {
         <DocTable
           headers={["Domain", "Golden record", "Control"]}
           rows={[
-            ["Customer (person)", "Customer.customerId, taxIdToken, email", "Merge on tax token. CIP plus email/phone required to open the file."],
+            ["Customer (person)", "Customer.customerId, ssnLast4, email", "SSN token stays on the server. CIP plus email/phone required to open the file."],
             ["Applicant login", "ApplicantAccount.authUserId", "Email confirmed, then password account. Business locked until emailVerified."],
             ["Business (org)", "Business.businessId, EIN token", "SOS / KYB; sole prop is a person with optional org overlay."],
             ["Process / file", "Process.processId", "Stage machine 01–08. Never a chat session key."],
