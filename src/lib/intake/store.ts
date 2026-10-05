@@ -13,7 +13,6 @@ export type Customer = {
   emailConfirmed: boolean;
   emailVerified: boolean;
   authUserId: string | null;
-  ssnToken: string;
   ssnLast4: string;
   dob: string;
   gender: string;
@@ -28,7 +27,6 @@ export type Customer = {
 export type Business = {
   businessId: string;
   legalName: string;
-  taxIdToken: string;
   taxIdLast4: string;
   businessType: string;
   incorporatedOn: string;

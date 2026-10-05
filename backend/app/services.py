@@ -50,13 +50,20 @@ def get_process(db: Session, process_id: str) -> models.Process:
     return row
 
 
+def assert_can_read(process: models.Process, user) -> None:
+    """A file with no account is a capability URL. Once it is bound, only that account."""
+    if not process.user_id:
+        return
+    if not user:
+        raise HTTPException(status_code=401, detail="Sign in required.")
+    if user.id != process.user_id:
+        raise HTTPException(status_code=403, detail="This file is bound to another account.")
+
+
 def assert_can_write(process: models.Process, user) -> None:
     if process.stage_status in ("rejected", "sealed"):
         raise HTTPException(status_code=409, detail="Process is closed.")
-    # Bound files reject a *different* signed-in applicant. Desk staff
-    # (no FastAPI session) can still work the file.
-    if process.user_id and user and user.id != process.user_id:
-        raise HTTPException(status_code=403, detail="This file is bound to another account.")
+    assert_can_read(process, user)
 
 
 def seed_team(db: Session, process: models.Process) -> None:

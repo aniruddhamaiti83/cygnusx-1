@@ -171,8 +171,8 @@ def run_consumer_credit(db: Session, process: models.Process, source: str, produ
         "FCRA: one pull keyed (partyId, processId). Score >= 640 is pass. SBSS is not the gate. "
         "lastCheckedAt is the bureau as-of date. yearsSinceFirstCredit is age of oldest tradeline. "
         "outstandingAmount is current revolving + installment balance.",
-        f"Consumer credit pull. Customer={name}. Source={source}. Product={product} ({score_type}). "
-        f"Process={process.process_id}. Last4={customer.ssn_last4}. DOB year={(customer.dob or '')[:4]}.",
+        f"Consumer credit pull. Source={source}. Product={product} ({score_type}). "
+        "Do not invent a Social Security number, date of birth, or address.",
     )
     score = float(data.get("score") or 712)
     outcome = data.get("outcome") or ("pass" if score >= 640 else "fail")

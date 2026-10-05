@@ -40,7 +40,6 @@ def _issue(db: Session, user: User, response: Response) -> dict:
     db.commit()
     _set_cookie(response, token)
     return {
-        "token": token,
         "user": {"id": user.id, "email": user.email, "name": user.name, "emailVerified": user.email_verified},
     }
 

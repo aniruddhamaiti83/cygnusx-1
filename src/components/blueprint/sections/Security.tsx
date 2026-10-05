@@ -94,7 +94,7 @@ export function SecuritySections() {
           partyId. Sealed process rows remain as required audit if the bank must retain the file.
         </Lede>
         <P>
-          Raw SSN is never in prompts, lake feeds, or indexes — only taxIdToken and last four. Lake
+          Raw SSN is never in prompts, lake feeds, or the browser — only a keyed token on the server and the last four. Lake
           copies are in the cascade.
         </P>
       </Section>

@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     database_url: str = DEFAULT_SQLITE
     secret_key: str = "cygnusx-1-dev-secret-change-me"
+    cors_origins: str = "http://127.0.0.1:8080,http://localhost:8080"
     llm_base_url: str = ""
     llm_api_key: str = "ollama"
     llm_model: str = "llama3.1"
