@@ -201,6 +201,7 @@
     <li><a href="#oem"><span class="n">02</span> Data Model (Schema)</a></li>
     <li><a href="#stageflow"><span class="n">03</span> Process Flow &amp; Records</a></li>
     <li><a href="#swarm"><span class="n">04</span> Agent Orchestration</a></li>
+    <li><a href="#api"><span class="n">API</span> Origination API</a></li>
     <div class="grp">DATA &AMP; QUALITY</div>
     <li><a href="#data"><span class="n">05</span> Unstructured Data &amp; RAG</a></li>
     <li><a href="#mdm"><span class="n">06</span> Master Data Management</a></li>
@@ -686,6 +687,46 @@
   <h3>Orchestration rules</h3>
   <ul><li>Supervisor dispatches only workers allowed for Process.currentStage. A documentation worker cannot call E-Tran.</li><li>Each worker has a service identity and a tool allowlist. Tokens are short-lived and tagged with processId.</li><li>Workers write canonical tables — they do not keep private shadow copies of Customer, Business, or Loan.</li><li>Evaluator rejects ungrounded claims (no artefactId) and low-confidence extraction. It never fills a gate.</li><li>Pre-application qualifies the customer: any one passing check (consumer credit, business credit, or fraud history) advances the file. The swarm cannot infer a pass.</li><li>ScorecardResult is advisory. Decision is a human row (Diana Okonkwo). guarantyNumber is written only from E-Tran.</li><li>Every message, tool call, and confidence score appends AuditEvent under processId. That spine is the replay log.</li></ul>
   <blockquote class="callout"><strong>Fail-closed —</strong> consumer credit, commercial credit, and OFAC must pass to leave Pre-application. The swarm cannot infer a pass, invent a guarantyNumber, or post the ledger. Dual-control posting is human.</blockquote>
+</section>
+
+<section id="api">
+  <h2><span class="num">API</span> Origination API</h2>
+  <p class="lede">FastAPI publishes the explorer at <a href="/api/cx1/docs">/api/cx1/docs</a> and the spec at <a href="/api/cx1/openapi.json">/api/cx1/openapi.json</a>. The preview proxies anything under <code>/api/cx1</code>. A bound file requires the owning session. Another account is 403. No session is 401. A closed file is 409.</p>
+  <p><a class="btn" href="/api/cx1/docs" style="background:var(--navy);color:#fff;">Open the API explorer</a></p>
+  <h3>Auth</h3>
+  <table><thead><tr><th>Method</th><th>Path</th><th>What it does</th></tr></thead><tbody>
+    <tr><td>POST</td><td>/api/cx1/auth/signup</td><td>Creates the account. The session is an HttpOnly cookie.</td></tr>
+    <tr><td>POST</td><td>/api/cx1/auth/login</td><td>Same cookie. The token is not in the JSON body.</td></tr>
+    <tr><td>POST</td><td>/api/cx1/auth/logout</td><td>Deletes the session.</td></tr>
+    <tr><td>GET</td><td>/api/cx1/auth/me</td><td>The signed-in user, or empty.</td></tr>
+  </tbody></table>
+  <h3>File</h3>
+  <table><thead><tr><th>Method</th><th>Path</th><th>What it does</th></tr></thead><tbody>
+    <tr><td>GET</td><td>/api/cx1/health</td><td>Database and which model is configured. No key.</td></tr>
+    <tr><td>GET</td><td>/api/cx1/catalog</td><td>Stages, staff, and products.</td></tr>
+    <tr><td>POST</td><td>/api/cx1/processes</td><td>Opens a file.</td></tr>
+    <tr><td>GET</td><td>/api/cx1/processes/{id}</td><td>The whole file. SSN and EIN tokens stay on the server.</td></tr>
+    <tr><td>PUT</td><td>…/customer</td><td>Person. The SSN is stored as a keyed token.</td></tr>
+    <tr><td>POST</td><td>…/confirm-email</td><td>Email plus the last four of the phone.</td></tr>
+    <tr><td>POST</td><td>…/account</td><td>Password, at least 8 characters. Binds the file.</td></tr>
+    <tr><td>PUT</td><td>…/business</td><td>Company and EIN.</td></tr>
+    <tr><td>PUT</td><td>…/loan</td><td>The loan.</td></tr>
+    <tr><td>POST</td><td>…/advance</td><td>Next stage, if the gate passes.</td></tr>
+  </tbody></table>
+  <h3>Swarm and decision</h3>
+  <table><thead><tr><th>Method</th><th>Path</th><th>What it does</th></tr></thead><tbody>
+    <tr><td>POST</td><td>…/agents/run</td><td>Runs only the current stage.</td></tr>
+    <tr><td>POST</td><td>…/agents/consumer-credit</td><td>One consumer pull.</td></tr>
+    <tr><td>POST</td><td>…/agents/commercial-credit</td><td>One business pull.</td></tr>
+    <tr><td>POST</td><td>…/agents/sanctions</td><td>Fraud screen.</td></tr>
+    <tr><td>POST</td><td>…/agents/processing-pack</td><td>KYB, size, SAM, and statements.</td></tr>
+    <tr><td>POST</td><td>…/collateral</td><td>Pledge and insurance.</td></tr>
+    <tr><td>POST</td><td>…/decision</td><td>A person approves, or rejects with a reason.</td></tr>
+    <tr><td>POST</td><td>…/documents</td><td>Image and review acknowledgement.</td></tr>
+    <tr><td>POST</td><td>…/guaranty</td><td>A person authorizes the guaranty.</td></tr>
+    <tr><td>POST</td><td>…/ledger</td><td>Dual-control post.</td></tr>
+  </tbody></table>
+  <blockquote class="callout"><strong>Not in the schema —</strong> pre-application passes if any one of consumer credit, commercial credit, or fraud passes. A credit proposal is releasable only at 97% confidence and under 3% hallucination. Those rules live in services.py and return 400.</blockquote>
 </section>
 
 <section id="data">
