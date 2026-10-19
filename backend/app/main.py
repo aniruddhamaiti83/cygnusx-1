@@ -7,7 +7,14 @@ from .settings import settings
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="CygnusX-1", version="0.2.0")
+    app = FastAPI(
+        title="CygnusX-1",
+        version="0.2.0",
+        description="Origination API. Bound files require the owning session.",
+        docs_url="/api/cx1/docs",
+        redoc_url="/api/cx1/redoc",
+        openapi_url="/api/cx1/openapi.json",
+    )
     origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
     app.add_middleware(
         CORSMiddleware,

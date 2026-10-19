@@ -9,6 +9,7 @@ export const TOC: TocGroup[] = [
       { id: "oem", n: "02", label: "Data Model (Schema)" },
       { id: "stageflow", n: "03", label: "Process Flow & Records" },
       { id: "swarm", n: "04", label: "Agent Orchestration" },
+      { id: "api", n: "API", label: "Origination API" },
     ],
   },
   {

@@ -3,6 +3,7 @@ import { Cover } from "@/components/blueprint/Cover";
 import { Toc } from "@/components/blueprint/Toc";
 import { OverviewSection, PipelineSections } from "@/components/blueprint/sections/Core";
 import { OrchestrationSection } from "@/components/blueprint/sections/Orchestration";
+import { ApiSection } from "@/components/blueprint/sections/Api";
 import { SecuritySections } from "@/components/blueprint/sections/Security";
 import { CommercialSections } from "@/components/blueprint/sections/Commercial";
 import { ValueSections } from "@/components/blueprint/sections/Value";
@@ -24,6 +25,7 @@ function BlueprintPage() {
           <OemSection />
           <StageRecordsSection />
           <OrchestrationSection />
+          <ApiSection />
           <PipelineSections />
           <SecuritySections />
           <CommercialSections />
