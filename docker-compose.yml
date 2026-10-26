@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: cygnusx1
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cygnusx1}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: cygnusx1
     volumes:
       - cygnusx1_pg:/var/lib/postgresql/data
@@ -24,10 +24,12 @@ services:
     image: cygnusx1-api
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
-      DATABASE_URL: postgresql://cygnusx1:${POSTGRES_PASSWORD:-cygnusx1}@db:5432/cygnusx1
-      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      DATABASE_URL: postgresql://cygnusx1:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/cygnusx1
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DASHBOARD_TOKEN: ${DASHBOARD_TOKEN:?Set DASHBOARD_TOKEN in .env}
+      APP_ENV: ${APP_ENV:-development}
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_API_KEY: ${LLM_API_KEY:-ollama}
       LLM_MODEL: ${LLM_MODEL:-llama3.1}
