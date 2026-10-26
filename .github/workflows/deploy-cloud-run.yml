@@ -68,7 +68,7 @@ jobs:
           gcloud run deploy "$SERVICE" \
             --image "$IMAGE" --region "$REGION" --project "$PROJECT_ID" \
             --platform managed --port 8000 --execution-environment gen2 \
-            --set-env-vars "APP_ENV=production,CORS_ORIGINS=$CORS_ORIGINS,WEB_CONCURRENCY=1" \
+            --set-env-vars "^@^APP_ENV=production@CORS_ORIGINS=$CORS_ORIGINS@WEB_CONCURRENCY=1" \
             --set-secrets "DATABASE_URL=$DATABASE_URL_SECRET:latest,SECRET_KEY=$SECRET_KEY_SECRET:latest,DASHBOARD_TOKEN=$DASHBOARD_TOKEN_SECRET:latest" \
             --min 1 --max 10 --cpu 1 --memory 1Gi --timeout 300 --no-allow-unauthenticated
           gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format='value(status.url)'
