@@ -44,7 +44,7 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npm run check:auth
+      # The auth-invariant unit tests run under npm test; check:auth is an optional live-server probe.
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
