@@ -6,7 +6,7 @@
  * Applied files are keyed by BASENAME, so the same file applies once no matter
  * which directory it is globbed from. That is what makes the auth schema safe to
  * copy from `migrations/auth/` into `migrations/` when an app turns sign-in on:
- * a database that already has `0001_auth.sql` will not re-run it.
+  if (/(^|\/)0001_auth\.sql$/i.test(normalized)) return authEnabled;
  *
  * Auth migrations live under `migrations/auth/` and are included only when
  * `VITE_AUTH_ENABLED` resolves to true. Their basename is still the migration key.
@@ -38,7 +38,7 @@ export function isMigrationFile(path) {
  */
 export function shouldApplyMigration(path, authEnabled) {
   const normalized = String(path).replaceAll("\\", "/");
-  if (/(^|\\/)auth\\/[^/]+\\.sql$/i.test(normalized)) return authEnabled;
+  if (/(^|\/)auth\/[^/]+\.sql$/i.test(normalized)) return authEnabled;
   if (/(^|\\/)0001_auth\\.sql$/i.test(normalized)) return authEnabled;
   return true;
 }
