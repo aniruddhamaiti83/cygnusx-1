@@ -19,16 +19,26 @@ def validate_runtime_config() -> None:
     """Fail closed on insecure production configuration."""
     if settings.app_env.strip().lower() not in {"production", "prod"}:
         return
+    def looks_placeholder(value: str) -> bool:
+        lowered = value.strip().lower()
+        return not lowered or any(
+            marker in lowered
+            for marker in ("change-me", "changeme", "dev-secret", "replace-with", "placeholder", "example")
+        )
+
     secret = settings.secret_key.strip()
-    if len(secret) < 32 or "change-me" in secret.lower() or "dev-secret" in secret.lower():
-        raise RuntimeError("Production requires SECRET_KEY with 32+ non-placeholder characters.")
-    if len(settings.dashboard_token.strip()) < 32:
-        raise RuntimeError("Production requires DASHBOARD_TOKEN with at least 32 characters.")
+    if len(secret) < 32 or looks_placeholder(secret):
+        raise RuntimeError("Production requires SECRET_KEY with 32+ random, non-placeholder characters.")
+    dashboard_token = settings.dashboard_token.strip()
+    if len(dashboard_token) < 32 or looks_placeholder(dashboard_token):
+        raise RuntimeError("Production requires DASHBOARD_TOKEN with 32+ random, non-placeholder characters.")
     if settings.database_url.lower().startswith("sqlite"):
         raise RuntimeError("Production requires PostgreSQL; SQLite is for local development only.")
     origins = [item.strip() for item in settings.cors_origins.split(",") if item.strip()]
     if not origins or "*" in origins:
         raise RuntimeError("Production CORS_ORIGINS must contain explicit browser origins.")
+    if any(not origin.startswith("https://") for origin in origins):
+        raise RuntimeError("Production CORS_ORIGINS must use HTTPS origins only.")
 
 def check_database() -> None:
     from sqlalchemy import text
