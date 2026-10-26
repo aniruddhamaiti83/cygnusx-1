@@ -55,7 +55,7 @@ otherwise a deterministic heuristic so origination still runs.
 cd backend
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+python runner.py
 ```
 
 ### 3b. FastAPI in Docker (port 8000)
@@ -63,7 +63,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 From the repo root. Postgres is on the Compose network; the API is published on **8000**.
 
 ```bash
-cp .env.example .env   # optional — set SECRET_KEY / POSTGRES_PASSWORD / XAI_API_KEY
+cp .env.example .env   # required — replace the placeholder passwords and secrets
 docker compose up --build
 ```
 
@@ -110,3 +110,57 @@ Design sections at the front:
 3. Agent orchestration (supervisor → stage workers → evaluator)
 
 Phase 2 in-app: Collateral + Underwriter multi-agent stage.
+
+## Operations dashboard and server runner
+
+The FastAPI server can be started from the repository root using:
+
+```bash
+python runner.py
+# In another shell, validate runtime configuration and DB connectivity:
+python runner.py --check
+```
+
+The default local API is `http://127.0.0.1:8000`. OpenAPI docs are at
+`/api/cx1/docs`, health at `/api/cx1/health`, readiness at `/api/cx1/ready`,
+and the live HTML operations dashboard is `/dashboard`. The dashboard displays
+request count/rate, p50/p95/p99 latency, 5xx rate, uptime, CPU, process RSS,
+memory, disk usage, database size/connect latency/table count, and LLM provider
+configuration. Metrics are at `/api/cx1/ops/metrics`.
+
+For production, set `APP_ENV=production`, PostgreSQL `DATABASE_URL`, a
+cryptographically random `SECRET_KEY` (32+ characters), a separate random
+`DASHBOARD_TOKEN` (32+ characters), and explicit browser origins in
+`CORS_ORIGINS`. The runner intentionally refuses unsafe production defaults.
+Generate secrets locally with Python, for example:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+When using Docker Compose, change every placeholder in `.env` first and run
+`docker compose up --build -d`. The API port binds to loopback by default.
+Do not publish a laptop port directly to the public internet; use a managed
+cloud endpoint or an authenticated VPN/tunnel with TLS and appropriate access
+controls. For local frontend development, use `npm ci` then `npm run dev`.
+
+## CI/CD and cloud
+
+GitHub Actions validates Python compilation/tests, frontend lint/types/tests,
+and a container build for pull requests. A manually triggered Google Cloud Run
+workflow is included at `.github/workflows/deploy-cloud-run.yml`; requirements
+and GitHub variables/secrets are documented in `deploy/README.md`. AWS ECS
+Fargate/RDS deployment planning is also documented there. Cloud account resources
+and IAM policies must be configured by the deployment owner; no cloud deployment
+is performed automatically from this repository setup.
+
+## Production-readiness status
+
+This is production-oriented groundwork, **not a client production certification**.
+Before any real borrower/customer traffic, the security issues in the rollout
+checklist in `deploy/README.md` must be closed and independently tested. In
+particular, the current local schema creation behavior must be replaced with
+reviewed, versioned migrations, public intake and authentication endpoints need
+abuse controls, and identity verification must use a real challenge flow. Runtime
+metrics are instance-local and reset on restart; use CloudWatch or Google Cloud
+Monitoring for retained fleet-wide telemetry and alerting.
