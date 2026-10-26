@@ -154,6 +154,18 @@ Fargate/RDS deployment planning is also documented there. Cloud account resource
 and IAM policies must be configured by the deployment owner; no cloud deployment
 is performed automatically from this repository setup.
 
+## Frontend auth flag
+
+The tracked `.grok/app-env.json` is a non-secret **local/dev** default with
+`VITE_AUTH_ENABLED=false`, matching the sandbox workspace behavior. Vite embeds
+this setting into browser JavaScript at build time. A production frontend build
+must explicitly set `VITE_AUTH_ENABLED=true` in its build environment (the
+process environment overrides the local app-env file), and the deployed auth
+provider / callback URLs must be configured and tested. Do not deploy the
+dev-fallback identity to customer traffic. The included Cloud Run and ECS
+workflows deploy the **FastAPI API/dashboard container**, not the React/TanStack
+frontend; configure the frontend hosting pipeline separately.
+
 ## Production-readiness status
 
 This is production-oriented groundwork, **not a client production certification**.
