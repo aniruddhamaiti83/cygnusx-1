@@ -1,4 +1,4 @@
-import { pendingMigrations } from "../../scripts/migration-plan.mjs";
+import { pendingMigrations, shouldApplyMigration } from "../../scripts/migration-plan.mjs";
 
 /** Which database backend is active. */
 export type DbSource = "neon" | "pglite";
@@ -129,24 +129,23 @@ async function createPgliteSql(): Promise<Sql> {
   });
   const pg = await globalRef.__pgliteInstance__;
 
-  // Apply migrations/ (the single schema source) so preview matches production.
-  // SQL is inlined by the bundler via import.meta.glob (no runtime fs); applied
-  // files are tracked in _migrations. The glob does not descend, so the opt-in
-  // auth schema under migrations/auth/ stays out. Runs once per module instance
-  // — so an HMR reload after adding a migration file applies it live — with
-  // passes serialized on a global chain so concurrent callers never
-  // double-apply.
+  // Apply root migrations plus the optional auth migration directory when
+  // VITE_AUTH_ENABLED is true. Files are inlined by the bundler (no runtime FS);
+  // migration basenames are tracked in _migrations. Passes are serialized so
+  // concurrent callers never double-apply.
   const migrate = async (): Promise<void> => {
-    const migrations = import.meta.glob("/migrations/*.sql", {
+    const migrations = import.meta.glob(["/migrations/*.sql", "/migrations/auth/*.sql"], {
       query: "?raw",
       import: "default",
       eager: true,
     }) as Record<string, string>;
+    const authEnabled = String(import.meta.env.VITE_AUTH_ENABLED ?? "true").trim().toLowerCase() !== "false";
+    const migrationPaths = Object.keys(migrations).filter((path) => shouldApplyMigration(path, authEnabled));
     const doneRows = await pg.query<{ name: string }>(
       "select name from _migrations",
     );
     const done = doneRows.rows.map((r) => r.name);
-    for (const { name, path } of pendingMigrations(Object.keys(migrations), done)) {
+    for (const { name, path } of pendingMigrations(migrationPaths, done)) {
       // Apply + record atomically (parity with scripts/migrate.mjs) so a failed
       // statement can't leave a file half-applied but untracked.
       await pg.transaction(async (tx) => {
