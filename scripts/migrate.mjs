@@ -67,8 +67,8 @@ async function main() {
     );
 
     let count = 0;
-    for (const { name } of pendingMigrations(entries, applied)) {
-      const text = await readFile(join(migrationsDir, name), "utf8");
+    for (const { name, path } of pendingMigrations(entries, applied)) {
+      const text = await readFile(join(migrationsDir, path), "utf8");
       try {
         await client.query("BEGIN");
         // pg's simple-query protocol runs a whole multi-statement file at once.
