@@ -68,7 +68,8 @@ def main() -> None:
         raise RuntimeError("PORT must be in range 1..65535.")
     if not 1 <= workers <= 16 or limit_concurrency < 1:
         raise RuntimeError("WEB_CONCURRENCY must be 1..16 and MAX_CONCURRENT_REQUESTS must be positive.")
-    host = os.environ.get("HOST", "0.0.0.0").strip() or "0.0.0.0"
+    default_host = "0.0.0.0" if settings.app_env.strip().lower() in {"production", "prod"} else "127.0.0.1"
+    host = os.environ.get("HOST", default_host).strip() or default_host
     LOG.info("Starting CygnusX-1 API (environment=%s, host=%s, port=%d, workers=%d)", settings.app_env, host, port, workers)
     if workers > 1:
         LOG.warning("In-memory request metrics are per-worker; use external monitoring for fleet-wide KPIs.")
