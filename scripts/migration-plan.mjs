@@ -8,8 +8,8 @@
  * copy from `migrations/auth/` into `migrations/` when an app turns sign-in on:
  * a database that already has `0001_auth.sql` will not re-run it.
  *
- * Neither applier descends into subdirectories, so `migrations/auth/*.sql` is
- * out of scope for both until it is copied up.
+ * Auth migrations live under `migrations/auth/` and are included only when
+ * `VITE_AUTH_ENABLED` resolves to true. Their basename is still the migration key.
  */
 
 /**
@@ -27,6 +27,20 @@ export function migrationName(path) {
  */
 export function isMigrationFile(path) {
   return path.endsWith(".sql");
+}
+
+/**
+ * Whether a migration path is eligible for application. Auth schema migrations
+ * are opt-in; the feature flag defaults to the environment's resolved value.
+ * @param {string} path
+ * @param {boolean} authEnabled
+ * @returns {boolean}
+ */
+export function shouldApplyMigration(path, authEnabled) {
+  const normalized = String(path).replaceAll("\\", "/");
+  if (/(^|\\/)auth\\/[^/]+\\.sql$/i.test(normalized)) return authEnabled;
+  if (/(^|\\/)0001_auth\\.sql$/i.test(normalized)) return authEnabled;
+  return true;
 }
 
 /**
