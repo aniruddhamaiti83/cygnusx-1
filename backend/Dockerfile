@@ -20,7 +20,7 @@ USER appuser
 EXPOSE 8000
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=5 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/cx1/health', timeout=4)"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/cx1/ready', timeout=4)"
 
 # Bind all interfaces so the published port is reachable from the host.
 CMD ["python", "runner.py"]
