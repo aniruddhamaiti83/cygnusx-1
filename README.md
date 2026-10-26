@@ -60,7 +60,7 @@ python runner.py
 
 ### 3b. FastAPI in Docker (port 8000)
 
-From the repo root. Postgres is on the Compose network; the API is published on **8000**.
+From the repo root. Postgres is on the Compose network; the API is published only on host loopback at **127.0.0.1:8000**.
 
 ```bash
 cp .env.example .env   # required — replace the placeholder passwords and secrets
@@ -75,7 +75,7 @@ SQLite only (no Postgres):
 
 ```bash
 docker build -t cygnusx1-api ./backend
-docker run --rm -p 8000:8000 -v cygnusx1-data:/app/data cygnusx1-api
+docker run --rm -p 127.0.0.1:8000:8000 -v cygnusx1-data:/app/data cygnusx1-api
 ```
 
 Local Ollama from the container: set `LLM_BASE_URL=http://host.docker.internal:11434/v1` in `.env`.
@@ -140,9 +140,7 @@ python -c "import secrets; print(secrets.token_urlsafe(48))"
 
 When using Docker Compose, change every placeholder in `.env` first and run
 `docker compose up --build -d`. The API port binds to loopback by default.
-Do not publish a laptop port directly to the public internet; use a managed
-cloud endpoint or an authenticated VPN/tunnel with TLS and appropriate access
-controls. For local frontend development, use `npm ci` then `npm run dev`.
+For remote reviewers, prefer the cloud endpoint. For a laptop-hosted demo, keep the API bound to loopback and use an authenticated VPN or SSH tunnel; do not publish a laptop port directly to the public internet. For local frontend development, use `npm ci` then `npm run dev`.
 
 ## CI/CD and cloud
 
