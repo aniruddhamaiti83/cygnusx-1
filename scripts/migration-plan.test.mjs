@@ -10,7 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { isMigrationFile, migrationName, pendingMigrations } from "./migration-plan.mjs";
+import { isMigrationFile, migrationName, pendingMigrations, shouldApplyMigration } from "./migration-plan.mjs";
 import { projectRoot } from "./with-app-env.mjs";
 
 const AUTH_MIGRATION = "0001_auth.sql";
@@ -36,6 +36,14 @@ test("a file already applied from another directory does not re-apply", () => {
   // The auth-on path copies migrations/auth/0001_auth.sql into the globbed
   // directory; a database that already has it must not run it twice.
   assert.deepEqual(pendingMigrations(["/migrations/0001_auth.sql"], ["0001_auth.sql"]), []);
+});
+
+test("auth migrations are opt-in in root and nested migration paths", () => {
+  assert.equal(shouldApplyMigration("0001_auth.sql", false), false);
+  assert.equal(shouldApplyMigration("/migrations/0001_auth.sql", false), false);
+  assert.equal(shouldApplyMigration("/migrations/auth/0001_auth.sql", false), false);
+  assert.equal(shouldApplyMigration("/migrations/auth/0001_auth.sql", true), true);
+  assert.equal(shouldApplyMigration("/migrations/0002_loans.sql", false), true);
 });
 
 test("pending migrations are returned in name order", () => {
