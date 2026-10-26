@@ -1,0 +1,91 @@
+name: Deploy API to AWS ECS Fargate
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional existing image tag (default: this commit SHA)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Validate deployment configuration
+        env:
+          ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          REGION: ${{ vars.AWS_REGION }}
+          ECR_REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY }}
+          ECS_CLUSTER: ${{ vars.AWS_ECS_CLUSTER }}
+          ECS_SERVICE: ${{ vars.AWS_ECS_SERVICE }}
+          EXEC_ROLE: ${{ vars.ECS_TASK_EXECUTION_ROLE_ARN }}
+          TASK_ROLE: ${{ vars.ECS_TASK_ROLE_ARN }}
+          DB_SECRET: ${{ vars.ECS_DATABASE_URL_SECRET_ARN }}
+          APP_SECRET: ${{ vars.ECS_SECRET_KEY_SECRET_ARN }}
+          DASH_SECRET: ${{ vars.ECS_DASHBOARD_TOKEN_SECRET_ARN }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+        run: |
+          set -euo pipefail
+          for val in "$ACCOUNT_ID" "$REGION" "$ECR_REPOSITORY" "$ECS_CLUSTER" "$ECS_SERVICE" "$EXEC_ROLE" "$TASK_ROLE" "$DB_SECRET" "$APP_SECRET" "$DASH_SECRET" "$CORS_ORIGINS"; do
+            test -n "$val"
+          done
+      - name: Build and push immutable image
+        env:
+          ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          REGION: ${{ vars.AWS_REGION }}
+          REPOSITORY: ${{ vars.AWS_ECR_REPOSITORY }}
+          INPUT_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          TAG="${INPUT_TAG:-$GITHUB_SHA}"
+          IMAGE="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPOSITORY:$TAG"
+          aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com"
+          docker build -f backend/Dockerfile -t "$IMAGE" ./backend
+          docker push "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+      - name: Render ECS task definition
+        env:
+          REGION: ${{ vars.AWS_REGION }}
+          EXEC_ROLE: ${{ vars.ECS_TASK_EXECUTION_ROLE_ARN }}
+          TASK_ROLE: ${{ vars.ECS_TASK_ROLE_ARN }}
+          DB_SECRET: ${{ vars.ECS_DATABASE_URL_SECRET_ARN }}
+          APP_SECRET: ${{ vars.ECS_SECRET_KEY_SECRET_ARN }}
+          DASH_SECRET: ${{ vars.ECS_DASHBOARD_TOKEN_SECRET_ARN }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+        run: |
+          set -euo pipefail
+          jq --arg image "$IMAGE" --arg region "$REGION" --arg exec "$EXEC_ROLE" --arg task "$TASK_ROLE" \
+             --arg db "$DB_SECRET" --arg app "$APP_SECRET" --arg dash "$DASH_SECRET" --arg cors "$CORS_ORIGINS" '
+            .executionRoleArn=$exec |
+            .taskRoleArn=$task |
+            (.containerDefinitions[] | select(.name=="cygnusx1-api") | .image)=$image |
+            (.containerDefinitions[] | select(.name=="cygnusx1-api") | .environment[] | select(.name=="CORS_ORIGINS") | .value)=$cors |
+            (.containerDefinitions[] | select(.name=="cygnusx1-api") | .secrets[] | select(.name=="DATABASE_URL") | .valueFrom)=$db |
+            (.containerDefinitions[] | select(.name=="cygnusx1-api") | .secrets[] | select(.name=="SECRET_KEY") | .valueFrom)=$app |
+            (.containerDefinitions[] | select(.name=="cygnusx1-api") | .secrets[] | select(.name=="DASHBOARD_TOKEN") | .valueFrom)=$dash |
+            (.containerDefinitions[] | select(.name=="cygnusx1-api") | .logConfiguration.options["awslogs-region"])=$region
+          ' deploy/aws/task-definition.template.json > task-definition.rendered.json
+      - name: Register task definition
+        run: |
+          set -euo pipefail
+          ARN=$(aws ecs register-task-definition --cli-input-json file://task-definition.rendered.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "TASK_DEFINITION_ARN=$ARN" >> "$GITHUB_ENV"
+      - name: Deploy service and wait for steady state
+        env:
+          CLUSTER: ${{ vars.AWS_ECS_CLUSTER }}
+          SERVICE: ${{ vars.AWS_ECS_SERVICE }}
+        run: |
+          set -euo pipefail
+          aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" --task-definition "$TASK_DEFINITION_ARN" >/dev/null
+          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
