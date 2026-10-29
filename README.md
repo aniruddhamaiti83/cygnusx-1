@@ -9,6 +9,7 @@ CygnusX-1 is a prototype for the U.S. SBA loan-origination lifecycle, with a Rea
 - [System architecture and trust boundaries](docs/architecture/system-architecture.md)
 - [SBA loan lifecycle and human approval gates](docs/architecture/sba-loan-lifecycle.md)
 - [Regulatory / operational control matrix and rollout gates](docs/compliance/control-matrix.md)
+- [Enterprise KPI benchmarking rules and acceptance targets](docs/engineering/kpi-benchmarking-rules.md)
 - [Cloud deployment runbook](deploy/README.md)
 - [Standalone blueprint](public/cygnusx-1-blueprint.html)
 
