@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const CX1_SOCK = process.env.CX1_API_SOCK || "/tmp/cx1-api.sock";
-const TCP = process.env.CX1_API_TCP === "1";
+const TCP = process.env.CX1_API_TCP === "1" || process.platform === "win32";
 const foreground = process.argv.includes("--foreground");
 
 function unixHealthy() {
@@ -85,9 +85,9 @@ async function findPython() {
 }
 
 function uvicornArgs() {
-  const base = ["-m", "uvicorn", "app.main:app", "--app-dir", join(ROOT, "backend")];
-  if (TCP) return [...base, "--host", "127.0.0.1", "--port", "8000", "--reload"];
-  return [...base, "--uds", CX1_SOCK, "--reload"];
+  const runner = join(ROOT, "backend", "runner.py");
+  if (TCP) return [runner, "--host", "127.0.0.1", "--port", "8000", "--reload"];
+  return [runner, "--uds", CX1_SOCK, "--reload"];
 }
 
 function hint() {
