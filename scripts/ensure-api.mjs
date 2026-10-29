@@ -5,7 +5,7 @@
  * Local/Docker can still use TCP via CX1_API_TCP=1 or CX1_API_URL.
  */
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import http from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,7 +19,7 @@ function unixHealthy() {
   if (!existsSync(CX1_SOCK)) return Promise.resolve(false);
   return new Promise((resolve) => {
     const req = http.request(
-      { socketPath: CX1_SOCK, path: "/api/cx1/health", method: "GET", timeout: 1500 },
+      { socketPath: CX1_SOCK, path: "/api/cx1/ready", method: "GET", timeout: 1500 },
       (res) => {
         res.resume();
         resolve(res.statusCode === 200);
@@ -36,7 +36,7 @@ function unixHealthy() {
 
 async function tcpHealthy() {
   try {
-    const res = await fetch("http://127.0.0.1:8000/api/cx1/health", { signal: AbortSignal.timeout(1500) });
+    const res = await fetch("http://127.0.0.1:8000/api/cx1/ready", { signal: AbortSignal.timeout(1500) });
     return res.ok;
   } catch {
     return false;
@@ -105,13 +105,6 @@ Install and start it (repo root):
 
 async function startBackground(bin) {
   mkdirSync(join(ROOT, "backend", "data"), { recursive: true });
-  if (!TCP) {
-    try {
-      rmSync(CX1_SOCK);
-    } catch {
-      /* missing is fine */
-    }
-  }
   const child = spawnPython(bin, uvicornArgs(), {
     cwd: ROOT,
     detached: true,
@@ -123,18 +116,12 @@ async function startBackground(bin) {
     await new Promise((r) => setTimeout(r, 250));
     if (await healthy()) return true;
   }
+  child.kill("SIGTERM");
   return false;
 }
 
 function startForeground(bin) {
   mkdirSync(join(ROOT, "backend", "data"), { recursive: true });
-  if (!TCP) {
-    try {
-      rmSync(CX1_SOCK);
-    } catch {
-      /* missing is fine */
-    }
-  }
   const child = spawnPython(bin, uvicornArgs(), { cwd: ROOT, stdio: "inherit", env: process.env });
   child.on("exit", (code) => process.exit(code ?? 1));
 }
@@ -147,7 +134,7 @@ if (await healthy()) {
 const bin = await findPython();
 if (!bin) {
   console.error(hint());
-  process.exit(foreground ? 1 : 0);
+  process.exit(1);
 }
 
 if (foreground) {
@@ -157,6 +144,9 @@ if (foreground) {
   console.log(TCP ? "Starting Origination API on port 8000…" : `Starting Origination API on ${CX1_SOCK}…`);
   const ok = await startBackground(bin);
   if (ok) console.log("Origination API ready.");
-  else console.error(hint());
+  else {
+    console.error(hint());
+    process.exit(1);
+  }
   process.exit(0);
 }
