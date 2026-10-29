@@ -33,6 +33,8 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Runner configuration smoke test
         run: python runner.py --help
+      - name: Runner preflight smoke test
+        run: python runner.py --check
 
   frontend:
     name: Frontend lint, types, tests and build
