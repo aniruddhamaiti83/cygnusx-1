@@ -93,7 +93,9 @@ def _prepare_unix_socket(path_text: str) -> str:
     """Prepare a private local socket without deleting an arbitrary filesystem entry."""
     if os.name == "nt":
         raise RuntimeError("Unix-domain sockets are not supported by this runner on Windows; use TCP mode.")
-    socket_path = Path(path_text).expanduser().resolve()
+    expanded = Path(path_text).expanduser()
+    # Normalize dot segments without following a leaf symlink before lstat.
+    socket_path = Path(os.path.abspath(str(expanded)))
     socket_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         existing = socket_path.lstat()
@@ -102,6 +104,8 @@ def _prepare_unix_socket(path_text: str) -> str:
     else:
         if not stat.S_ISSOCK(existing.st_mode):
             raise RuntimeError("Refusing to remove the configured socket path because it is not a Unix-domain socket.")
+        if hasattr(os, "getuid") and existing.st_uid != os.getuid():
+            raise RuntimeError("Refusing to remove a Unix-domain socket owned by another OS user.")
         socket_path.unlink()
     return str(socket_path)
 
