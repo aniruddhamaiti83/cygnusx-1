@@ -44,9 +44,10 @@ async function tcpHealthy() {
 }
 
 async function healthy() {
-  if (await unixHealthy()) return true;
+  // Use the configured transport exclusively; do not accidentally reuse a
+  // stale socket when the process is configured for the TCP proxy.
   if (TCP) return tcpHealthy();
-  return false;
+  return unixHealthy();
 }
 
 function pythonCandidates() {
