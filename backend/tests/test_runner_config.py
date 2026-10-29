@@ -1,9 +1,12 @@
 """Runtime configuration tests for the API runner."""
+import os
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from app.settings import settings
-from runner import validate_runtime_config
+from runner import _prepare_unix_socket, validate_runtime_config
 
 
 class RuntimeConfigTests(unittest.TestCase):
@@ -60,6 +63,15 @@ class RuntimeConfigTests(unittest.TestCase):
         ):
             with self.assertRaisesRegex(RuntimeError, "SECRET_KEY"):
                 validate_runtime_config()
+
+    @unittest.skipIf(os.name == "nt", "Unix-domain sockets are not used on Windows")
+    def test_socket_setup_refuses_to_delete_regular_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "not-a-socket"
+            target.write_text("preserve me", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "not a Unix-domain socket"):
+                _prepare_unix_socket(str(target))
+            self.assertEqual(target.read_text(encoding="utf-8"), "preserve me")
 
     def test_nonpositive_llm_timeout_is_rejected(self):
         with (
