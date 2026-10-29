@@ -211,7 +211,9 @@ function tokenIdentityKey(token: string): string {
             .digest("base64url");
         }
       }
-    } catch {}
+    } catch {
+      // Non-JWT or malformed tokens fall back to hashing the opaque token below.
+    }
   }
   return createHash("sha256").update(token).digest("base64url");
 }

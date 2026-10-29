@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import Session as AuthSession
 from ..models import User, new_id
+from ..settings import settings
 from ..security import (
     COOKIE,
     current_user_optional,
@@ -29,7 +30,8 @@ def _set_cookie(response: Response, token: str) -> None:
         token,
         httponly=True,
         samesite="lax",
-        max_age=14 * 24 * 3600,
+        secure=settings.app_env.strip().lower() in {"production", "prod"},
+        max_age=settings.session_days * 24 * 3600,
         path="/",
     )
 
@@ -85,7 +87,13 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
         if row:
             db.delete(row)
             db.commit()
-    response.delete_cookie(COOKIE, path="/")
+    response.delete_cookie(
+        COOKIE,
+        path="/",
+        secure=settings.app_env.strip().lower() in {"production", "prod"},
+        httponly=True,
+        samesite="lax",
+    )
     return {"ok": True}
 
 

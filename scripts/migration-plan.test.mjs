@@ -10,7 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { isMigrationFile, migrationName, pendingMigrations } from "./migration-plan.mjs";
+import { isMigrationFile, migrationName, pendingMigrations, shouldApplyMigration } from "./migration-plan.mjs";
 import { projectRoot } from "./with-app-env.mjs";
 
 const AUTH_MIGRATION = "0001_auth.sql";
@@ -38,6 +38,14 @@ test("a file already applied from another directory does not re-apply", () => {
   assert.deepEqual(pendingMigrations(["/migrations/0001_auth.sql"], ["0001_auth.sql"]), []);
 });
 
+test("auth migrations are opt-in in root and nested migration paths", () => {
+  assert.equal(shouldApplyMigration("0001_auth.sql", false), false);
+  assert.equal(shouldApplyMigration("/migrations/0001_auth.sql", false), false);
+  assert.equal(shouldApplyMigration("/migrations/auth/0001_auth.sql", false), false);
+  assert.equal(shouldApplyMigration("/migrations/auth/0001_auth.sql", true), true);
+  assert.equal(shouldApplyMigration("/migrations/0002_loans.sql", false), true);
+});
+
 test("pending migrations are returned in name order", () => {
   assert.deepEqual(
     pendingMigrations(
@@ -58,8 +66,10 @@ test("non-.sql entries are dropped (readdir also yields the auth/ directory)", (
 
 test("the auth schema ships outside the globbed directory", () => {
   const migrationsDir = join(projectRoot(), "migrations");
-  assert.deepEqual(pendingMigrations(readdirSync(migrationsDir), []), []);
-  assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
+  const rootEntries = readdirSync(migrationsDir);
+  assert.equal(rootEntries.includes(AUTH_MIGRATION), false, "auth-only migration must not be in the default root glob");
+  assert.equal(pendingMigrations(rootEntries, []).some((migration) => migration.name === AUTH_MIGRATION), false);
+  assert.ok(readdirSync(join(migrationsDir, "auth")).includes(AUTH_MIGRATION));
 });
 
 test("this workspace's auth schema copy is byte-identical to its source", () => {

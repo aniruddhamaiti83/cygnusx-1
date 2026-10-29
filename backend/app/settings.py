@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     llm_timeout: float = 60.0
     xai_api_key: str = ""
     session_days: int = 14
+    app_env: str = "development"
+    dashboard_token: str = ""
 
 
 settings = Settings()

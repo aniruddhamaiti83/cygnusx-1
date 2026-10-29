@@ -1,0 +1,43 @@
+{
+  "family": "cygnusx1-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "REPLACE_EXECUTION_ROLE_ARN",
+  "taskRoleArn": "REPLACE_TASK_ROLE_ARN",
+  "containerDefinitions": [
+    {
+      "name": "cygnusx1-api",
+      "image": "REPLACE_IMAGE_URI",
+      "essential": true,
+      "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+      "environment": [
+        {"name": "APP_ENV", "value": "production"},
+        {"name": "PORT", "value": "8000"},
+        {"name": "WEB_CONCURRENCY", "value": "1"},
+        {"name": "CORS_ORIGINS", "value": "REPLACE_CORS_ORIGINS"}
+      ],
+      "secrets": [
+        {"name": "DATABASE_URL", "valueFrom": "REPLACE_DATABASE_URL_SECRET_ARN"},
+        {"name": "SECRET_KEY", "valueFrom": "REPLACE_SECRET_KEY_ARN"},
+        {"name": "DASHBOARD_TOKEN", "valueFrom": "REPLACE_DASHBOARD_TOKEN_ARN"}
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/cygnusx1-api",
+          "awslogs-region": "REPLACE_AWS_REGION",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/cx1/ready', timeout=3)\" || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ]
+}
