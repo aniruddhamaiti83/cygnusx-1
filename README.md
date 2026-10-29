@@ -99,11 +99,18 @@ docker compose up --build
 
 Compose publishes the API only to host loopback at `127.0.0.1:8000`. Stop with `Ctrl+C`; for detached mode use `docker compose up --build -d` and stop using `docker compose down`. To remove local database volumes, review the volume deletion carefully before using `docker compose down -v`.
 
-The frontend remains a separate local process:
-```bash
-npm ci
-npm run dev
-```
+The frontend remains a separate local process. Because Compose publishes the API on loopback port 8000, start Vite in TCP-proxy mode so it reuses the container API rather than launching a second backend.
+
+macOS/Linux:
+
+    CX1_API_TCP=1 npm run dev
+
+Windows PowerShell:
+
+    $env:CX1_API_TCP = "1"
+    npm run dev
+
+The HTML dashboard is available through Vite at http://localhost:8080/dashboard. The direct container API is available locally at http://127.0.0.1:8000.
 
 For a local Ollama server reached from inside Docker, set `LLM_BASE_URL=http://host.docker.internal:11434/v1` in `.env`. The optional LLM can be omitted; the application has a deterministic heuristic fallback when no provider is configured. A fallback is not a substitute for lender-approved underwriting analysis.
 
