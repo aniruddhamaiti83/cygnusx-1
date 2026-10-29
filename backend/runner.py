@@ -2,14 +2,16 @@
 
 Run from the repository root with python runner.py or from backend/ with
 python runner.py. Run python runner.py --check before starting a service.
-Keep local development bound to loopback; use a TLS/authenticated gateway for
-remote users rather than exposing a laptop directly to the public internet.
+For local browser development, scripts/ensure-api.mjs uses a private Unix
+socket; for standalone API or containers, use the TCP listener. Do not expose
+a laptop directly to the public internet.
 """
 from __future__ import annotations
 
 import argparse
 import logging
 import os
+import stat
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -87,6 +89,23 @@ def validate_runtime_config() -> None:
             raise RuntimeError("CORS_ORIGINS values must be origins only (no path, query, or fragment).")
 
 
+def _prepare_unix_socket(path_text: str) -> str:
+    """Prepare a private local socket without deleting an arbitrary filesystem entry."""
+    if os.name == "nt":
+        raise RuntimeError("Unix-domain sockets are not supported by this runner on Windows; use TCP mode.")
+    socket_path = Path(path_text).expanduser().resolve()
+    socket_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        existing = socket_path.lstat()
+    except FileNotFoundError:
+        pass
+    else:
+        if not stat.S_ISSOCK(existing.st_mode):
+            raise RuntimeError("Refusing to remove the configured socket path because it is not a Unix-domain socket.")
+        socket_path.unlink()
+    return str(socket_path)
+
+
 def check_database() -> None:
     """Check DB connectivity without creating or modifying application tables."""
     from sqlalchemy import text
@@ -111,8 +130,8 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--check", action="store_true", help="validate configuration and database connectivity, then exit")
-    parser.add_argument("--host", default=None, help="bind address; local development defaults to loopback")
-    parser.add_argument("--port", type=int, default=os.environ.get("PORT", "8000"), help="HTTP listening port")
+    parser.add_argument("--host", default=None, help="TCP bind address; local development defaults to loopback")
+    parser.add_argument("--port", type=int, default=os.environ.get("PORT", "8000"), help="TCP listening port")
     parser.add_argument("--workers", type=int, default=os.environ.get("WEB_CONCURRENCY", "1"), help="Uvicorn worker processes")
     parser.add_argument(
         "--max-concurrent-requests",
@@ -121,6 +140,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Uvicorn concurrency limit per worker",
     )
     parser.add_argument("--log-level", default=os.environ.get("LOG_LEVEL", "info").lower(), help="debug, info, warning, error, or critical")
+    parser.add_argument("--uds", default=None, help="Unix-domain socket path for the local Vite proxy")
+    parser.add_argument("--reload", action="store_true", help="enable development auto-reload; forbidden in production")
     return parser
 
 
@@ -132,11 +153,16 @@ def main(argv: list[str] | None = None) -> None:
     if log_level not in _LOG_LEVELS:
         parser.error("--log-level must be one of: debug, info, warning, error, critical")
 
+    environment = settings.app_env.strip().lower()
     try:
         _positive_int("PORT", args.port, minimum=1, maximum=65535)
         _positive_int("WEB_CONCURRENCY", args.workers, minimum=1, maximum=16)
         _positive_int("MAX_CONCURRENT_REQUESTS", args.max_concurrent_requests, minimum=1)
         validate_runtime_config()
+        if args.uds and os.name == "nt":
+            raise RuntimeError("Unix-domain sockets are not supported by this runner on Windows; use TCP mode.")
+        if args.reload and environment in _PRODUCTION_ENVS:
+            raise RuntimeError("--reload is a development-only option and is forbidden in production.")
     except RuntimeError as exc:
         parser.error(str(exc))
 
@@ -149,55 +175,69 @@ def main(argv: list[str] | None = None) -> None:
         try:
             check_database()
         except Exception as exc:
-            # Deliberately avoid logging exception details: DB errors can expose hosts
-            # or connection metadata. The original exception remains chained for debugging.
             LOG.error("Database connectivity check failed (%s).", type(exc).__name__)
             raise RuntimeError("Database connectivity check failed; verify DATABASE_URL and database availability.") from exc
         LOG.info("Runtime preflight passed (environment=%s).", settings.app_env)
         return
 
-    default_host = "0.0.0.0" if settings.app_env.strip().lower() in _PRODUCTION_ENVS else "127.0.0.1"
+    default_host = "0.0.0.0" if environment in _PRODUCTION_ENVS else "127.0.0.1"
     host = (args.host or os.environ.get("HOST") or default_host).strip()
-    if not host or any(char.isspace() for char in host):
-        parser.error("HOST/--host must be a non-empty bind address without whitespace.")
+    if not args.uds and (not host or any(char.isspace() for char in host)):
+        parser.error("HOST/--host must be a non-empty TCP bind address without whitespace.")
 
-    if host in {"0.0.0.0", "::"} and settings.app_env.strip().lower() not in _PRODUCTION_ENVS:
-        LOG.warning(
-            "Binding to all interfaces outside production. Verify firewall rules and do not expose this laptop to the public internet."
-        )
+    uds_path: str | None = None
+    if args.uds:
+        try:
+            uds_path = _prepare_unix_socket(args.uds)
+        except RuntimeError as exc:
+            parser.error(str(exc))
+
+    if not uds_path and host in {"0.0.0.0", "::"} and environment not in _PRODUCTION_ENVS:
+        LOG.warning("Binding to all interfaces outside production. Restrict firewall rules; never expose a dev laptop to the public internet.")
 
     if args.workers > 1:
-        LOG.warning(
-            "Using multiple workers. Request metrics are in-memory and per-worker; use external telemetry for fleet-wide KPIs."
-        )
+        LOG.warning("Using multiple workers. Request metrics are in-memory and per-worker; use external telemetry for fleet-wide KPIs.")
 
     import uvicorn
 
     access_log = os.environ.get("ACCESS_LOG", "false").strip().lower() in {"1", "true", "yes", "on"}
     forwarded_allow_ips = os.environ.get("FORWARDED_ALLOW_IPS", "127.0.0.1").strip()
-    LOG.info(
-        "Starting CygnusX-1 API (environment=%s, host=%s, port=%d, workers=%d, access_log=%s)",
-        settings.app_env,
-        host,
-        args.port,
-        args.workers,
-        access_log,
-    )
-    uvicorn.run(
-        "app.main:app",
-        app_dir=str(BACKEND_DIR),
-        host=host,
-        port=args.port,
-        workers=args.workers,
-        log_level=log_level,
-        access_log=access_log,
-        proxy_headers=True,
-        forwarded_allow_ips=forwarded_allow_ips,
-        server_header=False,
-        timeout_keep_alive=10,
-        timeout_graceful_shutdown=30,
-        limit_concurrency=args.max_concurrent_requests,
-    )
+    if uds_path:
+        LOG.info("Starting CygnusX-1 API on private Unix socket %s (environment=%s, reload=%s)", uds_path, settings.app_env, args.reload)
+        # Limit local socket permissions to the current OS user/group.
+        previous_umask = os.umask(0o077)
+    else:
+        LOG.info(
+            "Starting CygnusX-1 API on TCP %s:%d (environment=%s, workers=%d, access_log=%s)",
+            host,
+            args.port,
+            settings.app_env,
+            args.workers,
+            access_log,
+        )
+        previous_umask = None
+
+    try:
+        uvicorn.run(
+            "app.main:app",
+            app_dir=str(BACKEND_DIR),
+            host=host,
+            port=args.port,
+            uds=uds_path,
+            reload=args.reload,
+            workers=args.workers,
+            log_level=log_level,
+            access_log=access_log,
+            proxy_headers=True,
+            forwarded_allow_ips=forwarded_allow_ips,
+            server_header=False,
+            timeout_keep_alive=10,
+            timeout_graceful_shutdown=30,
+            limit_concurrency=args.max_concurrent_requests,
+        )
+    finally:
+        if previous_umask is not None:
+            os.umask(previous_umask)
 
 
 if __name__ == "__main__":
