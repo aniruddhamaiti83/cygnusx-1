@@ -20,7 +20,7 @@ class RuntimeConfigTests(unittest.TestCase):
         with (
             patch.object(settings, "app_env", "production"),
             patch.object(settings, "secret_key", "pX4fK7rQ9wT2vN6mA8sD1hJ5kL0zB3cE"),
-            patch.object(settings, "dashboard_token", "T8uV3wX6yZ9aB2cD5eF7gH0jK4mN1pQ"),
+            patch.object(settings, "dashboard_token", "T8uV3wX6yZ9aB2cD5eF7gH0jK4mN1pQR"),
             patch.object(settings, "database_url", "postgresql://app:secret@db.internal:5432/cygnusx1"),
             patch.object(settings, "cors_origins", "https://app.example.org"),
             patch.object(settings, "llm_timeout", 30.0),
@@ -32,7 +32,7 @@ class RuntimeConfigTests(unittest.TestCase):
         with (
             patch.object(settings, "app_env", "production"),
             patch.object(settings, "secret_key", "pX4fK7rQ9wT2vN6mA8sD1hJ5kL0zB3cE"),
-            patch.object(settings, "dashboard_token", "T8uV3wX6yZ9aB2cD5eF7gH0jK4mN1pQ"),
+            patch.object(settings, "dashboard_token", "T8uV3wX6yZ9aB2cD5eF7gH0jK4mN1pQR"),
             patch.object(settings, "database_url", "sqlite:///production.db"),
             patch.object(settings, "cors_origins", "https://app.example.org"),
         ):
@@ -43,7 +43,7 @@ class RuntimeConfigTests(unittest.TestCase):
         with (
             patch.object(settings, "app_env", "production"),
             patch.object(settings, "secret_key", "pX4fK7rQ9wT2vN6mA8sD1hJ5kL0zB3cE"),
-            patch.object(settings, "dashboard_token", "T8uV3wX6yZ9aB2cD5eF7gH0jK4mN1pQ"),
+            patch.object(settings, "dashboard_token", "T8uV3wX6yZ9aB2cD5eF7gH0jK4mN1pQR"),
             patch.object(settings, "database_url", "postgresql://app:secret@db.internal:5432/cygnusx1"),
             patch.object(settings, "cors_origins", "*"),
         ):
