@@ -15,23 +15,30 @@ import { isMigrationFile } from "./scripts/migration-plan.mjs";
 
 function cx1ApiProxyPlugin(): Plugin {
   const sock = process.env.CX1_API_SOCK || "/tmp/cx1-api.sock";
+  const tcp = process.env.CX1_API_TCP === "1" || process.platform === "win32";
   return {
-    name: "cx1-api-unix-proxy",
+    name: "cx1-api-proxy",
     apply: "serve",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = req.url ?? "";
         const pathOnly = url.split("?", 1)[0] ?? "";
-        if (!pathOnly.startsWith("/api/cx1")) {
+        // The operations dashboard is HTML, and its metrics endpoint shares
+        // the /api/cx1 prefix. Forward both through the same private API target.
+        if (!pathOnly.startsWith("/api/cx1") && pathOnly !== "/dashboard") {
           next();
           return;
         }
         const headers: http.OutgoingHttpHeaders = { ...req.headers };
         delete headers.connection;
         delete headers["content-length"];
+        delete headers.host;
+        const target: http.RequestOptions = tcp
+          ? { hostname: "127.0.0.1", port: 8000 }
+          : { socketPath: sock };
         const proxy = http.request(
           {
-            socketPath: sock,
+            ...target,
             path: url,
             method: req.method,
             headers,

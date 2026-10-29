@@ -33,6 +33,62 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Runner configuration smoke test
         run: python runner.py --help
+      - name: Runner preflight smoke test
+        run: python runner.py --check
+      - name: Live API and HTML dashboard smoke test
+        run: |
+          python - <<'PY'
+          import http.client
+          import json
+          import os
+          import subprocess
+          import sys
+          import time
+          import urllib.error
+          import urllib.request
+
+          port = 18173
+          base = f"http://127.0.0.1:{port}"
+          process = subprocess.Popen(
+              [sys.executable, "runner.py", "--host", "127.0.0.1", "--port", str(port)],
+              stdout=subprocess.PIPE,
+              stderr=subprocess.STDOUT,
+              text=True,
+              env=os.environ.copy(),
+          )
+          try:
+              last_error = None
+              for _ in range(60):
+                  if process.poll() is not None:
+                      raise RuntimeError("API runner exited during startup")
+                  try:
+                      with urllib.request.urlopen(base + "/api/cx1/ready", timeout=2) as response:
+                          if response.status == 200:
+                              break
+                  except Exception as exc:
+                      last_error = exc
+                      time.sleep(0.25)
+              else:
+                  raise RuntimeError(f"API readiness failed: {last_error!r}")
+
+              with urllib.request.urlopen(base + "/dashboard", timeout=3) as response:
+                  html = response.read().decode("utf-8")
+                  assert response.status == 200 and "Operations Dashboard" in html
+              with urllib.request.urlopen(base + "/api/cx1/ops/metrics", timeout=3) as response:
+                  metrics = json.loads(response.read().decode("utf-8"))
+                  assert response.status == 200
+                  assert {"compute", "storage", "database", "http"} <= set(metrics)
+              print("Live readiness, HTML dashboard, and resource metrics endpoints passed.")
+          finally:
+              process.terminate()
+              try:
+                  process.wait(timeout=10)
+              except subprocess.TimeoutExpired:
+                  process.kill()
+                  process.wait(timeout=5)
+              if process.stdout:
+                  process.stdout.close()
+          PY
 
   frontend:
     name: Frontend lint, types, tests and build

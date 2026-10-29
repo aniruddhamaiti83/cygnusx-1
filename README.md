@@ -9,6 +9,8 @@ CygnusX-1 is a prototype for the U.S. SBA loan-origination lifecycle, with a Rea
 - [System architecture and trust boundaries](docs/architecture/system-architecture.md)
 - [SBA loan lifecycle and human approval gates](docs/architecture/sba-loan-lifecycle.md)
 - [Regulatory / operational control matrix and rollout gates](docs/compliance/control-matrix.md)
+- [Enterprise KPI benchmarking rules and acceptance targets](docs/engineering/kpi-benchmarking-rules.md)
+- [Qwen Coder enterprise-readiness prompt](docs/engineering/qwen-coder-enterprise-readiness-prompt.md)
 - [Cloud deployment runbook](deploy/README.md)
 - [Standalone blueprint](public/cygnusx-1-blueprint.html)
 
@@ -30,50 +32,51 @@ Process ID is the parent. OEM is 25 tables. CamelCase fields. The application is
 
 ### Option A — easiest local development (SQLite)
 
-From a terminal at the repository root:
+From a terminal, clone the repository and install the frontend dependencies:
 
-```bash
-git clone https://github.com/aniruddhamaiti83/cygnusx-1.git
-cd cygnusx-1
-npm ci
-```
+    git clone https://github.com/aniruddhamaiti83/cygnusx-1.git
+    cd cygnusx-1
+    npm ci
 
-**Terminal 1 — start the API:**
+Install backend dependencies once. On macOS/Linux:
 
-macOS/Linux:
-```bash
-python3 -m venv backend/.venv
-source backend/.venv/bin/activate
-python -m pip install -r backend/requirements.txt
-python runner.py --check
-python runner.py
-```
+    python3 -m venv backend/.venv
+    source backend/.venv/bin/activate
+    python -m pip install -r backend/requirements.txt
 
-Windows PowerShell:
-```powershell
-py -3 -m venv backend/.venv
-.\backend\.venv\Scripts\Activate.ps1
-python -m pip install -r backend/requirements.txt
-python runner.py --check
-python runner.py
-```
+On Windows PowerShell:
 
-The backend defaults to a local SQLite database under `backend/data/`; no separate database is required for a basic local run. Keep synthetic/test data in local development.
+    py -3 -m venv backend/.venv
+    .\backend\.venv\Scripts\Activate.ps1
+    python -m pip install -r backend/requirements.txt
 
-**Terminal 2 — start the frontend:**
-```bash
-npm run dev
-```
+Run the preflight, then start the integrated local development server from the repository root:
 
-Open [http://localhost:8080](http://localhost:8080). The API is normally at [http://127.0.0.1:8000](http://127.0.0.1:8000), API docs at [http://127.0.0.1:8000/api/cx1/docs](http://127.0.0.1:8000/api/cx1/docs), health at [http://127.0.0.1:8000/api/cx1/health](http://127.0.0.1:8000/api/cx1/health), readiness at [http://127.0.0.1:8000/api/cx1/ready](http://127.0.0.1:8000/api/cx1/ready), and the operations dashboard at [http://127.0.0.1:8000/dashboard](http://127.0.0.1:8000/dashboard).
+    python runner.py --check
+    npm run dev
 
-> The repo's `npm run dev` script attempts to start the API if it is not already running. If you start the API manually as above, the frontend script should reuse it. If you see a port-in-use error, stop the duplicate API process and restart `npm run dev`.
+The development command starts the API through the hardened runner and the Vite frontend. On macOS/Linux, the API uses a private local Unix socket behind Vite. On Windows, the local proxy uses a loopback TCP API. This is intentional: do not start a second API instance while the integrated development server is managing it.
 
-On Windows, a convenience helper is also available:
-```powershell
-.\scripts\start-local.ps1
-```
-Review the script before execution; it prepares/starts the local stack and may invoke local tooling.
+Open the frontend and HTML operations dashboard at:
+
+- App: http://localhost:8080
+- HTML operations dashboard: http://localhost:8080/dashboard
+- API docs: http://localhost:8080/api/cx1/docs
+- Health: http://localhost:8080/api/cx1/health
+- Readiness: http://localhost:8080/api/cx1/ready
+
+When the API is run standalone with the root runner instead of the integrated Vite setup, it listens on http://127.0.0.1:8000 by default; the dashboard is then http://127.0.0.1:8000/dashboard. Do not run both modes at once unless both the runner and Vite are configured with CX1_API_TCP=1 so that Vite reuses the existing loopback API process.
+
+#### Allowing trusted LAN users to view the local HTML dashboard
+
+The Vite development server binds to all interfaces, so another device on the same trusted LAN can open http://LAPTOP-LAN-IP:8080/dashboard after the laptop firewall allows the connection. To make the operations metrics endpoint require a token, set a strong random DASHBOARD_TOKEN in the same shell before launching npm run dev; the dashboard prompts the viewer for this token. For example, on macOS/Linux:
+
+    export DASHBOARD_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    npm run dev
+
+Use only a trusted network, restrict inbound firewall access to intended devices, and use synthetic data. The local development auth flag is not suitable for customer traffic. Never port-forward this dev server to the public internet. For remote users outside a trusted LAN, deploy behind TLS, a real identity provider, authorization, and an approved cloud gateway.
+
+The backend defaults to a local SQLite database under backend/data/; no separate database is required for a basic local run. Keep synthetic/test data in local development.
 
 ### Option B — Docker Compose with PostgreSQL
 
@@ -97,11 +100,18 @@ docker compose up --build
 
 Compose publishes the API only to host loopback at `127.0.0.1:8000`. Stop with `Ctrl+C`; for detached mode use `docker compose up --build -d` and stop using `docker compose down`. To remove local database volumes, review the volume deletion carefully before using `docker compose down -v`.
 
-The frontend remains a separate local process:
-```bash
-npm ci
-npm run dev
-```
+The frontend remains a separate local process. Because Compose publishes the API on loopback port 8000, start Vite in TCP-proxy mode so it reuses the container API rather than launching a second backend.
+
+macOS/Linux:
+
+    CX1_API_TCP=1 npm run dev
+
+Windows PowerShell:
+
+    $env:CX1_API_TCP = "1"
+    npm run dev
+
+The HTML dashboard is available through Vite at http://localhost:8080/dashboard. The direct container API is available locally at http://127.0.0.1:8000.
 
 For a local Ollama server reached from inside Docker, set `LLM_BASE_URL=http://host.docker.internal:11434/v1` in `.env`. The optional LLM can be omitted; the application has a deterministic heuristic fallback when no provider is configured. A fallback is not a substitute for lender-approved underwriting analysis.
 
